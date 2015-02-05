@@ -22,6 +22,10 @@ predict_surfaces=function(rdatedF,locs,newdata,newdatalocs,spatialblend,bpth){
      recon=get_sca(rdate)
      sca=get_sca(mdate)
      
+     #save indices of sca to insert predictions
+     scaind=which(sca!=0 & sca<=100)
+     cloudind=which(sca>100)
+     
      #combine ucophv dataframe and recon data
      newdata2=cbind(newdata,recon)
      newdata2$recon=scale(newdata2$recon)#convoluted but necessary order of operations

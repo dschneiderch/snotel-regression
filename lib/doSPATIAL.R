@@ -9,7 +9,7 @@ doSPATIAL=function(dF, locs, app, newdata=NULL,bpth,spatialblend){
      #print(str(dF))
      #kr=Krig(locsmat,dF$phvresid,theta=200000)
      sresidkr=Krig(locsmat,dF$phvresid,theta=200000)
-     #dresidkr=Krig(locsmat,dF$phvrcnresid,theta=200000)
+     dresidkr=Krig(locsmat,dF$phvrcnresid,theta=200000)
      #residtps=Tps(locsmat,dF$phvresid)
      #print(residkr)
      if(app=='xval'){
@@ -33,12 +33,12 @@ doSPATIAL=function(dF, locs, app, newdata=NULL,bpth,spatialblend){
           )
      }
      if(app=='predict'){
-          bpn=file.path(bpth,'raster')
+          #bpn=file.path(bpn,'raster')
           pfn=paste0('fullpred_phv-',unique(dF$date),'-',spatialblend,'.grd')
           prfn=paste0('fullpred_phvrcn-',unique(dF$date),'-',spatialblend,'.grd')
           #
-          phv.fullpred=newdata$phv.predictions-predict(residkr,x=newdata)
-          phvrcn.fullpred=newdata$phvrcn.predictions-predict(residkr,x=newdata,y=dF$phvrcnresid)        
+          phv.fullpred=newdata$phv.predictions-predict(sresidkr,x=newdata[,c('x','y')])
+          phvrcn.fullpred=newdata$phvrcn.predictions-predict(dresidkr,x=newdata[,c('x','y')])        
           return(
                data.frame(
                     phv.predictions=newdata$phv.predictions,

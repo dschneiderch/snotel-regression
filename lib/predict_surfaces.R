@@ -1,24 +1,26 @@
 #use static model and best dynamic model to produce surface estimates for a doy. iterate by year. returns rasters  for stacking       
-predict_surfaces=function(rdatedF,locs,newdata,newdatalocs,spatialblend,bpth){
+predict_surfaces=function(rdatedF,snotellocs.usgs,newdata,newdatalocs,spatialblend,bpth){
      #    rdatedF=which_recon_date[2,]#for testing only!
      # get reconyear and load the stack with that recon data.
      rdate=rdatedF$phvrcn_recondate
      mdate=rdatedF$date
-     get_sca=function(date){
-          yr=strftime(date,'%Y')
-          if(as.numeric(strftime(date,'%m')) >= 3){
+     get_sca=function(dte){
+          yr=strftime(dte,'%Y')
+          if(dte<max(recondata$recondate) & as.numeric(strftime(dte,'%m')) >= 3){
                rfn=paste0('data/recon_',recon.version,'/recondata_',yr,'_',recon.version,'.RData')
                if(!exists(paste0('recon',yr),envir=.GlobalEnv))  load(rfn,envir=.GlobalEnv)
                tmp=get(paste0('recon',yr),envir=.GlobalEnv)
-               stckdate=strftime(date,'X%Y%m%d')
+               stckdate=strftime(dte,'X%Y%m%d')
           } else {     
                print('using modscag fsca for masking. may not be completely cloudfree')
                tmp=stack(file.path('data','selectdates','modscag',paste0('fsca',yr,'.grd')))    
-               stckdate=strftime(date,'X%Y%j')
+               stckdate=strftime(dte,'X%Y%j')
           }
           rind=grep(stckdate,names(tmp))
-          return(getValues(tmp[[rind]]))
+          vals=tryCatch({getValues(tmp[[rind]])},error=function(x) {
+               print(paste0('the date ',dte,' was not available in the selected sca image'))})
      }
+     
      recon=get_sca(rdate)
      sca=get_sca(mdate)
      
@@ -29,11 +31,8 @@ predict_surfaces=function(rdatedF,locs,newdata,newdatalocs,spatialblend,bpth){
      #combine ucophv dataframe and recon data
      newdata2=cbind(newdata,recon)
      newdata2$recon=scale(newdata2$recon)#convoluted but necessary order of operations
-     newdata2=newdata2[sca!=0,]
-     
-     #save indices of sca to insert predictions
-     scaind=which(sca!=0)
-     cloudind=which(sca>100)
+     newdata2=newdata2[scaind,]
+
                      
      # subset mdldata for date
      doydF=mdldata[mdldata$date==rdatedF$date,]
@@ -48,8 +47,8 @@ predict_surfaces=function(rdatedF,locs,newdata,newdatalocs,spatialblend,bpth){
                      
      #setup dataframes for spatial analysis
      newdatapreds=data.frame(
-          as.data.frame(newdatalocs.usgs)[sca!=0,],
-          phv.predictions=static.pred,#newdata was already reduced above
+          as.data.frame(newdatalocs.usgs)[scaind,],
+          phv.predictions=static.pred,#newdata was already subset for sca above
           phvrcn.predictions=dyn.pred)
      locpreds=data.frame(
           date=doydF$date,
@@ -61,7 +60,7 @@ predict_surfaces=function(rdatedF,locs,newdata,newdatalocs,spatialblend,bpth){
                      
      #geostatistical blending of residuals
      if(spatialblend=='blend'){
-          fullpreds=doSPATIAL(locpreds,locs, 'predict', newdatapreds,bpth,spatialblend)# newdatapreds has newdata locations and regression predictions. loc
+          fullpreds=doSPATIAL(locpreds,snotellocs.usgs, 'predict', newdatapreds, bpth, spatialblend)# newdatapreds has newdata locations and regression predictions. loc
           fullpreds[fullpreds<0]=NA
           newdatapredsfull=data.frame(phv.predictions=NA,phvrcn.predictions=NA,phv.fullpred=NA,phvrcn.fullpred=NA)
           newdatapredsfull$phv.predictions[scaind]=newdatapreds$phv.predictions

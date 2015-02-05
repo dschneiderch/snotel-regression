@@ -45,12 +45,15 @@ ind=mdldata$date %in% dateselect
 doidata=mdldata[ind,]
 
 # select recon dates to evaluate model with
-recondata=subset(mdldata, (dy==1 | dy==15) & yr!=2012 ) #recondata is used to iterate through recondates. these dates can be different than olddata/mdldata if wanted but must include at least 1 date before the mdl date if used in real-time mode
+#recondata is used to iterate through recondates. 
+#these dates can be different than olddata/mdldata if wanted but must include at least 1 date before the mdl date if used in real-time mode
+recondata=subset(mdldata, (dy==1 | dy==15) & yr!=2012 ) 
 
 # run model -------------------
-cost='cor'
-style='real-time'#'real-time'
+cost='cor'#cor, r2, mae, rmse
+style='real-time'#'real-time','reanalysis'
 spatialblend='blend'#flag to do geostatistical blending or not (prediction stage only; always does in the CV stage). blending takes long time for the entire domain..
+
 #find which recondate gives best estimate
 which_recon_date=ddply(doidata,.(yrdoy),doDOYfit,cost,style,.parallel=F, .drop=F,.inform=T)
 # ,.paropts=list(.export=c('rundata','doXVAL'),
@@ -70,6 +73,7 @@ str(which_recon_date)
 
 
 #define domain for prediction -------
+snotellocs.usgs=spTransform(snotellocs,CRS('+init=epsg:5070'))
 newdata=as.data.frame(scale(ucophv))#ucophv is automatically loaded with project and  contains newdata for prediction to domain
 newdatalocs=SpatialPoints(ucophv[,c('Long','Lat')])
 proj4string(newdatalocs)='+proj=longlat +datum=NAD83'

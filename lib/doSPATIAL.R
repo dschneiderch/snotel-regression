@@ -1,10 +1,10 @@
-#takes estimates residuals at snotel locations and fits krige model. substracts krige estimates from predictions (either at snotel locs or for entire domain)
-doSPATIAL=function(dF, locs, app, newdata=NULL,bpth,spatialblend){
+#takes estimates residuals at snotel locations and fits krige model. substracts krige estimates from predictions (either at snotel snotellocs.usgs or for entire domain)
+doSPATIAL=function(dF, snotellocs.usgs, app, newdata=NULL,bpth,spatialblend){
      dF=mutate(dF,
           phvresid=phv.predictions-snotel,#
           phvrcnresid=phvrcn.predictions-snotel,
           reconresid=recon-snotel)
-     locsmat=as.matrix(as.data.frame(locs)[,c('x','y')])
+     locsmat=as.matrix(as.data.frame(snotellocs.usgs)[,c('x','y')])
      #print(nrow(locsmat))
      #print(str(dF))
      #kr=Krig(locsmat,dF$phvresid,theta=200000)
@@ -13,9 +13,8 @@ doSPATIAL=function(dF, locs, app, newdata=NULL,bpth,spatialblend){
      #residtps=Tps(locsmat,dF$phvresid)
      #print(residkr)
      if(app=='xval'){
-          x=locsmat
-          phv.fullpred=dF$phv.predictions-predict(sresidkr,x=x)
-          phvrcn.fullpred=dF$phvrcn.predictions-predict(sresidkr,x=x,y=dF$phvrcnresid)
+          phv.fullpred=dF$phv.predictions-predict(sresidkr,x=locsmat)
+          phvrcn.fullpred=dF$phvrcn.predictions-predict(sresidkr,x=locsmat,y=dF$phvrcnresid)
           return(
                data.frame(
                     date=dF$date,

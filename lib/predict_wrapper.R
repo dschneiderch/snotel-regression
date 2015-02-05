@@ -6,9 +6,9 @@ predict_wrapper <- function(rdtsdF,style,newdata,newdatalocs,spatialblend){
      locs=spTransform(snotellocs,CRS('+init=epsg:5070'))
      bpth=paste0('diagnostics/rswe_',recon.version,'/fullpreds')
      
-     rasterlist=dlply(rdtsdF,.(yrdoy),predict_surfaces,locs,newdata,newdatalocs,spatialblend,bpth,.inform=F,.parallel=F)#,.paropts=list(.export=ls(), .packages=.packages(all=T)))
+     fullpreds=ddply(rdtsdF,.(yrdoy),predict_surfaces,locs,newdata,newdatalocs,spatialblend,bpth,.inform=F,.parallel=F)#,.paropts=list(.export=ls(), .packages=.packages(all=T)))
 
-a#      #output rasters of each model type.
+#     #output rasters of each model type.
 #      rasterlist=dlply(fullpreds,.(yrdoy),function(dF){
 #           staticr=raster(dF$phv.fullpred,CRS('+proj=longlat +datum=WGS'))
 #           dynr=raster(dF$phvrcn.fullpred,CRS('+proj=longlat +datum=WGS'))

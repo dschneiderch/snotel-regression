@@ -75,12 +75,12 @@ newdatalocs=SpatialPoints(ucophv[,c('Long','Lat')])
 proj4string(newdatalocs)='+proj=longlat +datum=NAD83'
 newdatalocs.usgs=spTransform(newdatalocs,CRS('+init=epsg:5070'))
 #
-geope=projectExtent(ucophv.stack[[1]],crs=projection(ucophv.stack))
+#geope=projectExtent(ucophv.stack[[1]],crs=projection(ucophv.stack))
 #
-rskel=ucophv.stack[[1]]
-values(rskel)=F
-names(rskel)=NULL
-rskel=projectRaster(rskel,crs=CRS('+init=epsg:5070'))
+#rskel=ucophv.stack[[1]]
+#values(rskel)=F
+#names(rskel)=NULL
+#rskel=projectRaster(rskel,crs=CRS('+init=epsg:5070'))
 
 #output dF of GLobal Moran I and objective functions for best model estimates for each yrdoy (by year). save predicted surfaces to netcdf by year.
 d_ply(which_recon_date,.(yr),predict_wrapper,style,newdata,newdatalocs.usgs,spatialblend,.inform=F,.parallel=F,.paropts=list(.export=ls(), .packages=.packages(all=T)))

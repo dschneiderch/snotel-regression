@@ -14,9 +14,9 @@ predict_wrapper <- function(rdtsdF,style,newdata,newdatalocs,spatialblend){
 #           dynr=raster(dF$phvrcn.fullpred,CRS('+proj=longlat +datum=WGS'))
 #           return(list(staticr,dynr))
 #           })
-     phvsurf=lapply(rasterlist,'[[',1)
-     phvrcnsurf=lapply(rasterlist,'[[',2)
-     
+#      phvsurf=lapply(rasterlist,'[[',1)
+#      phvrcnsurf=lapply(rasterlist,'[[',2)
+#      
      phvstack=stack(phvsurf)
      names(phvstack)=strftime(rdtsdF$date,'%Y%m%d')
      phvrcnstack=stack(phvrcnsurf)

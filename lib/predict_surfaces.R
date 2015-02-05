@@ -10,15 +10,15 @@ predict_surfaces=function(rdatedF,locs,newdata,newdatalocs,spatialblend,bpth){
                rfn=paste0('data/recon_',recon.version,'/recondata_',yr,'_',recon.version,'.RData')
                if(!exists(paste0('recon',yr),envir=.GlobalEnv))  load(rfn,envir=.GlobalEnv)
                tmp=get(paste0('recon',yr),envir=.GlobalEnv)
+               stckdate=strftime(date,'X%Y%m%d')
           } else {     
                print('using modscag fsca for masking. may not be completely cloudfree')
-               tmp=stack(file.path('data','selectdates','modscag',paste0('fsca',yr)))    
+               tmp=stack(file.path('data','selectdates','modscag',paste0('fsca',yr,'.grd')))    
+               stckdate=strftime(date,'X%Y%j')
           }
-          stckdate=strftime(date,'X%Y%m%d')
           rind=grep(stckdate,names(tmp))
           return(getValues(tmp[[rind]]))
      }
-     
      recon=get_sca(rdate)
      sca=get_sca(mdate)
      
@@ -29,7 +29,7 @@ predict_surfaces=function(rdatedF,locs,newdata,newdatalocs,spatialblend,bpth){
      
      #save indices of sca to insert predictions
      scaind=which(sca!=0)
-     domainframe=rep(NA,nrow(newdata))
+     cloudind=which(sca>100)
                      
      # subset mdldata for date
      doydF=mdldata[mdldata$date==rdatedF$date,]
@@ -44,27 +44,29 @@ predict_surfaces=function(rdatedF,locs,newdata,newdatalocs,spatialblend,bpth){
                      
      #setup dataframes for spatial analysis
      newdatapreds=data.frame(
-     as.data.frame(newdatalocs)[sca!=0,],
-     phv.predictions=static.pred,#newdata was already reduced above
-     phvrcn.predictions=dyn.pred)
+          as.data.frame(newdatalocs.usgs)[sca!=0,],
+          phv.predictions=static.pred,#newdata was already reduced above
+          phvrcn.predictions=dyn.pred)
      locpreds=data.frame(
-               date=doydF$date,
-               yrdoy=doydF$yrdoy,
-               phv.predictions=predict(static_mdl),
-               phvrcn.predictions=predict(dyn_mdl),
-               snotel=doydF$snotel,
-               recon=doydF$recon)
+          date=doydF$date,
+          yrdoy=doydF$yrdoy,
+          phv.predictions=predict(static_mdl),
+          phvrcn.predictions=predict(dyn_mdl),
+          snotel=doydF$snotel,
+          recon=doydF$recon)
                      
      #geostatistical blending of residuals
      if(spatialblend=='blend'){
           fullpreds=doSPATIAL(locpreds,locs, 'predict', newdatapreds,bpth,spatialblend)# newdatapreds has newdata locations and regression predictions. loc
           fullpreds[fullpreds<0]=NA
-          newdatapredsfull=data.frame(as.data.frame(newdatalocs),phv.predictions=NA,phvrcn.predictions=NA,phv.fullpred=NA,phvrcn.fullpred=NA)
+          newdatapredsfull=data.frame(phv.predictions=NA,phvrcn.predictions=NA,phv.fullpred=NA,phvrcn.fullpred=NA)
           newdatapredsfull$phv.predictions[scaind]=newdatapreds$phv.predictions
           newdatapredsfull$phvrcn.predictions[scaind]=newdatapreds$phvrcn.predictions
           newdatapredsfull$phv.fullpred[scaind]=fullpreds$phv.fullpred
           newdatapredsfull$phvrcn.fullpred[scaind]=fullpreds$phvrcn.fullpred
-                          
+          lapply(newdatapredsfull,function(col) col[cloudind]=sca[cloudind])
+          newdatapredsfull=cbind(newdatapreds,as.data.frame(newdatalocs.usgs))
+          
           pfn=paste0('fullpred_phv-',unique(rdatedF$date),'-',spatialblend,'.grd')
           prfn=paste0('fullpred_phvrcn-',unique(rdatedF$date),'-',spatialblend,'.grd')
                           

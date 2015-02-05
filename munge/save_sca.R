@@ -26,8 +26,13 @@ print(yr)
 	fn=list.files(d,full.names=T,pattern='*.tif$')
 #	print(fn)
 s=stack(fn,quick=T)
-writeRaster(s,file.path('data','selectdates','modscag',paste0('fsca',yr)))
+writeRaster(s,file.path('data','selectdates','modscag',paste0('fsca',yr,'.tif')),options=c("COMPRESS=LZW", "TILED=YES"))
+#writeRaster(s,file.path('data','selectdates','modscag',paste0('fsca',yr)))
 	})
 	
 	
 	
+dn0=dir('/Volumes/hydroData-1/WestUS_Data/UCO_FSCA/',pattern='20',full.names=T)
+dn0=dn0[seq(1,length(dn0),2)]
+
+dn0=dn0[strtrim(basename(dn0),4) %in% 2012]

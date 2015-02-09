@@ -1,8 +1,8 @@
-plot_localmoran=function(dF,locs,recon.version){
+plot_localmoran=function(dF,snotellocs.usgs,recon.version){
      maxdist=200000
-     kd=dnearneigh(locs,d1=0,d2=maxdist,row.names=locs$Station_ID)#d2 should equal abut 200km fro all stations to have some neighbors. min 8 with 200km.
+     kd=dnearneigh(locs,d1=0,d2=maxdist,row.names=snotellocs.usgs$Station_ID)#d2 should equal abut 200km fro all stations to have some neighbors. min 8 with 200km.
 summary(kd)
-     plot(kd,coords=coordinates(snotellocs))#
+     plot(kd,coords=coordinates(snotellocs.usgs))#
      getneighbors=function(nm){
           ind=grep(nm,attr(kd,'region.id'))
           vec=kd[[ind]]
@@ -10,12 +10,12 @@ summary(kd)
      } 
      snotelneighbors=ldply(as.list(attr(kd,'region.id')),getneighbors)
 #
-     dist=nbdists(kd,locs)
+     dist=nbdists(kd,snotellocs.usgs)
      p=1
      idw=lapply(dist,function(x) 1/(x^p))
      kd.idw=nb2listw(kd,glist=idw,style='W')
 #      kd.binary_weight=nb2listw(kd200,style='W')#this just weights the nearest neighbors for each station equally. W is row standardized.
-     
+     locsmat=as.matrix(as.data.frame(snotellocs.usgs)[,c('x','y')])    
      exdat=data.frame(locsmat,dF)
      localmoran4plot=function(localm){
           dF=cbind(as.data.frame(localm),x=locs.df$x,y=locs.df$y)

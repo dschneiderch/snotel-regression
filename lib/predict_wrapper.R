@@ -25,7 +25,7 @@ predict_wrapper <- function(rdtsdF,style,newdata,newdatalocs,spatialblend){
           ncvar_put(phvrcnnc,var,vals=dF$phvrcn.fullpred,start=c(1,1,which(tind==unique(dF$yrdoy))),count=c(-1,-1,1))
           ncatt_put(ncnew,0,'proj4string','+proj=longlat +datum=NAD83')
           
-          plot_localmoran()     
+          plot_localmoran(dF,snotellocs.usgs,recon.version)     
      })
      
      nc_close(phvnc)

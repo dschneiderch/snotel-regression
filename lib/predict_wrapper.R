@@ -6,27 +6,31 @@ predict_wrapper <- function(rdtsdF,style,newdata,newdatalocs,spatialblend){
      bpth=paste0('diagnostics/rswe_',recon.version,'/fullpreds')
      
      fullpreds=ddply(rdtsdF,.(yrdoy),predict_surfaces,snotellocs.usgs,newdata,newdatalocs,spatialblend,bpth,.inform=F,.parallel=F)#,.paropts=list(.export=ls(), .packages=.packages(all=T)))     
-   
-#output rasters of each model type.
-     rasterlist=dlply(fullpreds,.(yrdoy),function(dF){
-          staticr=raster(dF$phv.fullpred,CRS('+proj=longlat +datum=NAD83'))
-          dynr=raster(dF$phvrcn.fullpred,CRS('+proj=longlat +datum=NAD83'))
-          return(list(staticr,dynr))
-          }
-     )
-     phvsurf=lapply(rasterlist,'[[',1)
-     phvrcnsurf=lapply(rasterlist,'[[',2)
-#      
-     phvstack=stack(phvsurf)
-     names(phvstack)=strftime(rdtsdF$date,'%Y%m%d')
-     phvrcnstack=stack(phvrcnsurf)
-     names(phvrcnstack)=strftime(rdtsdF$date,'%Y%m%d')
-#     
+     
+     #output rasters of each model type.
+     dim1=ncdim_def('Long','degree',seq(-112.25,-104.125,0.00416666667))
+     dim2=ncdim_def('Lat','degree',seq(33,43.75,0.00416666667))
+     dim3=ncdim_def('time','yrdoy',unlim=T,vals=fullpreds$yrdoy)
+     var=ncvar_def('swe','meters',dim=list(dim1,dim2,dim3),missval=-99,longname='snow water equivalent',compression=6)
      yr=unique(rdtsdF$yr)
-     pfn=file.path(bpth,'netcdf',paste0('fullpreds-phv_',yr,'_',spatialblend,'.ncdf'))
-     prfn=file.path(bpth,'netcdf',paste0('fullpreds-phvrcn_',yr,'_',spatialblend,'.ncdf'))
-#     
-writeRaster(phvstack,filename=pfn,format='CDF',varname='swe',varunit='meters',xname='long',xunit='deg',yname='lat',yunit='deg',zname='time',zunit='day',overwrite=T)
-writeRaster(phvrcnstack,filename=prfn,format='CDF',varname='swe',varunit='meters',xname='long',xunit='deg',yname='lat',yunit='deg',zname='time',zunit='day',overwrite=T)
-#      GIdf=ddply(fullpreds,.(yrdoy),plot_localmoran,snotellocs.usgs,recon.version)#
+     phv.fn=file.path(bpth,'netcdf',paste0('fullpreds-phv_',yr,'_',spatialblend,'.nc'))
+     phvrcn.fn=file.path(bpth,'netcdf',paste0('fullpreds-phvrcn_',yr,'_',spatialblend,'.nc'))
+     phv.nc=nc_create(phv.fn,var)
+     phvrcn.nc=nc_create(phvrcn.fn,var)
+     tind=fullpreds$yrdoy
+     
+     GIdf=ddply(fullpreds,.(yrdoy),function(dF){
+          
+          ncvar_put(phvnc, var, vals=dF$phv.fullpred,start=c(1,1,which(tind==unique(dF$yrdoy))),count=c(-1,-1,1))
+          ncvar_put(phvrcnnc,var,vals=dF$phvrcn.fullpred,start=c(1,1,which(tind==unique(dF$yrdoy))),count=c(-1,-1,1))
+          ncatt_put(ncnew,0,'proj4string','+proj=longlat +datum=NAD83')
+          
+          plot_localmoran()     
+     })
+     
+     nc_close(phvnc)
+     nc_close(phvrcnnc)
+     
+     #     
+     #      
 }

@@ -11,7 +11,7 @@ snotelrecon=get_snotelrecondata(recon.version,ryrs)
 # generate swedata dataframe
 swedata=generate_swedata(snotelrecon)
 
- # setup parallel proecessing -----------
+# setup parallel processing -----------
 getnodes <- function() {
        f <- Sys.getenv('PBS_NODEFILE')
        x <- if (nzchar(f)) readLines(f) else rep('localhost', 2)

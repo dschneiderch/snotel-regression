@@ -1,7 +1,7 @@
 dates2model=function(opt){
      
      # Option A will only model dates for dates selected from modscag images.
-     # Option B will model selected dates from modscag for months prior to March and then 1st and 15th of March, April, May
+     # Option B will model selected dates from modscag for months prior to March and then 1st, 8th, 15th, 22nd of March, April, May
 
      if(opt=='A'){
           ## option A
@@ -21,7 +21,7 @@ dates2model=function(opt){
           make_gendts=function(){
                yr=seq(min(dts$yr),max(dts$yr))
                mth=c(3,4,5)
-               dy=c(1,15)
+               dy=c(1,8,15,22)
                dF=expand.grid(yr,mth,dy)
                colnames(dF)=c('yr','mth','dy')
                dF$date=strptime(with(dF,paste(yr,mth,dy)),'%Y %m %d',tz='MST')

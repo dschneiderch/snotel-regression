@@ -5,7 +5,7 @@ recursive_loading: FALSE
 munging: FALSE
 logging: FALSE
 load_libraries: TRUE
-libraries: raster, reshape2, plyr, ggplot2, stringr, rgdal, sp, RColorBrewer, MASS, ipred, doMC, doSNOW, fields,spdep
+libraries: raster, reshape2, plyr, ggplot2, stringr, rgdal, sp, RColorBrewer, MASS, ipred, doMC, doSNOW, fields,spdep,gridExtra
 as_factors: FALSE
 data_tables: FALSE
 attach_internal_libraries: FALSE

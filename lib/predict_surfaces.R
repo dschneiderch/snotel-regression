@@ -4,6 +4,7 @@ predict_surfaces=function(rdatedF,snotellocs.usgs,newdata,newdatalocs,spatialble
      # get reconyear and load the stack with that recon data.
      rdate=rdatedF$phvrcn_recondate
      mdate=rdatedF$date
+if(!is.na(mdate)){
      get_sca=function(dte){
           yr=strftime(dte,'%Y')
           if(dte<max(recondata$recondate) & as.numeric(strftime(dte,'%m')) >= 3){
@@ -116,5 +117,8 @@ predict_surfaces=function(rdatedF,snotellocs.usgs,newdata,newdatalocs,spatialble
                      #           phvrcn.fullpreds=raster(file.path(bpth,prfn))
                      #           
                      #           return(list(phv.fullpreds,phvrcn.fullpreds))
-                     
+    
+} else {
+     return(data.frame())
+}
 }

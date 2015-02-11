@@ -36,13 +36,16 @@ allocated.cores=2
 # get modelling data --------------------------------------------------------
 mdldata=swedata[swedata$mth<6,]#if changing mth<6, need to change dates2model too
 mdldata$recondate=mdldata$date
+mdldata=mdldata[order(mdldata$date,mdldata$Station_ID),]
+mdldata=fixNA(mdldata,'snotel')#this does a very simply linear interpolation. 
 
 # select dates to model ----------
 # Option A will only model dates for dates selected from modscag images.
-# Option B will model selected dates from modscag for months prior to March and then 1st and 15th of March, April, May
-dateselect=dates2model(opt='A')
+# Option B will model selected dates from modscag for months prior to March and then 1st, 8th, 15th, 22nd of March, April, May
+dateselect=dates2model(opt='B')
 ind=mdldata$date %in% dateselect
 doidata=mdldata[ind,]
+
 
 # select recon dates to evaluate model with
 #recondata is used to iterate through recondates. 
@@ -50,18 +53,37 @@ doidata=mdldata[ind,]
 recondata=subset(mdldata, (dy==1 | dy==15) & yr!=2012 ) 
 
 # run model -------------------
-cost='cor'#cor, r2, mae, rmse
+cost='r2'#cor, r2, mae, rmse
 style='real-time'#'real-time','reanalysis'
 spatialblend='blend'#flag to do geostatistical blending or not (prediction stage only; always does in the CV stage). blending takes long time for the entire domain..
 
+if(style=='real-time'){
+     doidata=subset(doidata,yr>2000)
+}
+# dte=strptime('20010524','%Y%m%d','MST')
+# ldte=strptime('20020302','%Y%m%d','MST')
+# doidata=subset(doidata,date>=dte)
+# doidata=subset(doidata,date<ldte)
+registerDoMC(3)
 #find which recondate gives best estimate
-which_recon_date=ddply(doidata,.(yrdoy),doDOYfit,cost,style,.parallel=F, .drop=F,.inform=T)
+doylist=dlply(doidata,.(yrdoy),doDOYfit,cost,style,.parallel=F, .drop=F,.inform=F)
 # ,.paropts=list(.export=c('rundata','doXVAL'),
 #                .packages=c('ipred','MASS')
 # )
 # )
+cleandF=function(dF){
+     mutate(dF,
+            yrdoy= attr(doylist,'split_labels')$yrdoy,
+            date=strptime(yrdoy,'%Y%j','MST'),
+            yr=strftime(date,'%Y'))
+}
+which_recon_date=cleandF(ldply(doylist,'[[',1))
+moran.df=cleandF(ldply(doylist,'[[',2))
+
 
 write.table(which_recon_date,paste0('diagnostics/rswe_',recon.version,'/',style,'_recondate_selection_',cost,'.txt'),sep='\t',row.names=F,quote=F)     
+write.table(moran.df,paste0('diagnostics/rswe_',recon.version,'/',style,'_moran_info_for_recondate_selection_',cost,'.txt'),sep='\t',row.names=F,quote=F)     
+
 
 ##### To continue from previous run
 which_recon_date=read.table(paste0('diagnostics/rswe_',recon.version,'/',style,'_recondate_selection_',cost,'.txt'),sep='\t',header=T,stringsAsFactors=F)

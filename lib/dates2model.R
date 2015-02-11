@@ -17,7 +17,7 @@ dates2model=function(opt){
                      yr=as.numeric(strftime(date,'%Y')),
                      mth=as.numeric(strftime(date,'%m')),
                      dy=as.numeric(strftime(date,'%d')))
-          dts=filter(dts,mth>=3 & mth<6)
+          dts=subset(dts,mth>=3 & mth<6)
           make_gendts=function(){
                yr=seq(min(dts$yr),max(dts$yr))
                mth=c(3,4,5)

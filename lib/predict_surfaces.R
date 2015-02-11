@@ -13,12 +13,12 @@ predict_surfaces=function(rdatedF,snotellocs.usgs,newdata,newdatalocs,spatialble
                stckdate=strftime(dte,'X%Y%m%d')
           } else {     
                print('using modscag fsca for masking. may not be completely cloudfree')
-               tmp=stack(file.path('data','selectdates','modscag',paste0('fsca',yr,'.grd')))    
+               tmp=stack(file.path('data','selectdates','modscag',paste0('fsca',yr,'.nc')))    
                stckdate=strftime(dte,'X%Y%j')
           }
           rind=grep(stckdate,names(tmp))
           vals=tryCatch({getValues(tmp[[rind]])},error=function(x) {
-               print(paste0('the date ',dte,' was not available in the selected sca image'))})
+          print(paste0('the date ',dte,' was not available in the selected sca image'))})
      }
      
      recon=get_sca(rdate)
@@ -33,7 +33,6 @@ predict_surfaces=function(rdatedF,snotellocs.usgs,newdata,newdatalocs,spatialble
      newdata2$recon=scale(newdata2$recon)#convoluted but necessary order of operations
      newdata2=newdata2[scaind,]
 
-                     
      # subset mdldata for date
      doydF=mdldata[mdldata$date==rdatedF$date,]
                      
@@ -58,27 +57,36 @@ predict_surfaces=function(rdatedF,snotellocs.usgs,newdata,newdatalocs,spatialble
           snotel=doydF$snotel,
           recon=doydF$recon)
                      
+     
+     
      #geostatistical blending of residuals
      if(spatialblend=='blend'){
           fullpreds=doSPATIAL(locpreds,snotellocs.usgs, 'predict', newdatapreds, bpth, spatialblend)# newdatapreds has newdata locations and regression predictions. loc
           fullpreds[fullpreds<0]=NA
-          newdatapredsfull=data.frame(phv.predictions=NA,phvrcn.predictions=NA,phv.fullpred=NA,phvrcn.fullpred=NA)
-          newdatapredsfull$phv.predictions[scaind]=newdatapreds$phv.predictions
-          newdatapredsfull$phvrcn.predictions[scaind]=newdatapreds$phvrcn.predictions
+          newdatapredsfull=data.frame(phv.predictions=rep(NA,length(sca)),phvrcn.predictions=NA,phv.fullpred=NA,phvrcn.fullpred=NA)
+          newdatapredsfull$phv.predictions[scaind]=fullpreds$phv.predictions
+          newdatapredsfull$phvrcn.predictions[scaind]=fullpreds$phvrcn.predictions
           newdatapredsfull$phv.fullpred[scaind]=fullpreds$phv.fullpred
           newdatapredsfull$phvrcn.fullpred[scaind]=fullpreds$phvrcn.fullpred
-          lapply(newdatapredsfull,function(col) col[cloudind]=sca[cloudind])
-          newdatapredsfull=cbind(newdatapreds,as.data.frame(newdatalocs.usgs))
+          if(length(cloudind)>0) {
+               newdatapredsfull=lapply(newdatapredsfull,function(col) {
+                    col[cloudind]=sca[cloudind]
+                    return(col)
+               })
+          }
+          newdatapredsfull=cbind(newdatapredsfull,as.data.frame(newdatalocs.usgs))
           
-          pfn=paste0('fullpred_phv-',unique(rdatedF$date),'-',spatialblend,'.grd')
-          prfn=paste0('fullpred_phvrcn-',unique(rdatedF$date),'-',spatialblend,'.grd')
-                          
-          writeRaster(num2ucoRaster(newdatapredsfull$phv.fullpred),
-                            filename=file.path(bpth,pfn),overwrite=T)
-                          #          phv.fullpreds=raster(file.path(bpth,pfn))
-          writeRaster(num2ucoRaster(newdatapredsfull$phvrcn.fullpred),
-                            filename=file.path(bpth,pfn),overwrite=T)
-                          #          phvrcn.fullpreds=raster(file.path(bpth,prfn))                
+#           pfn=paste0('fullpred_phv-',unique(rdatedF$date),'-',spatialblend,'.grd')
+#           prfn=paste0('fullpred_phvrcn-',unique(rdatedF$date),'-',spatialblend,'.grd')
+          
+          #           writeRaster(num2ucoRaster(newdatapredsfull$phv.fullpred),
+          #                             filename=file.path(bpth,pfn),overwrite=T)
+          #                           #          phv.fullpreds=raster(file.path(bpth,pfn))
+          #           writeRaster(num2ucoRaster(newdatapredsfull$phvrcn.fullpred),
+          #                             filename=file.path(bpth,pfn),overwrite=T)
+          #                           #          phvrcn.fullpreds=raster(file.path(bpth,prfn))                
+     
+       #          phvrcn.fullpreds=raster(file.path(bpth,prfn))                
      } else {
           newdatapreds[newdatapreds<0]=NA
           newdatapredsfull=data.frame(as.data.frame(newdatalocs),phv.predictions=NA,phvrcn.predictions=NA)
@@ -86,14 +94,14 @@ predict_surfaces=function(rdatedF,snotellocs.usgs,newdata,newdatalocs,spatialble
           newdatapredsfull$phvrcn.predictions[scaind]=newdatapreds$phvrcn.predictions
      }
                      
-     pfn=paste0('glmpred_phv-',unique(rdatedF$date),'.grd')
-     prfn=paste0('glmpred_phvrcn-',unique(rdatedF$date),'.grd')
-                    #
-     writeRaster(num2ucoRaster(newdatapredsfull$phv.predictions),
-                       filename=file.path(bpth,pfn),overwrite=T)
-     #phv.fullpreds=raster(file.path(bpth,pfn))
-     writeRaster(num2ucoRaster(newdatapredsfull$phvrcn.predictions),
-                       filename=file.path(bpth,pfn),overwrite=T)
+#      pfn=paste0('glmpred_phv-',unique(rdatedF$date),'.grd')
+#      prfn=paste0('glmpred_phvrcn-',unique(rdatedF$date),'.grd')
+#                     #
+#      writeRaster(num2ucoRaster(newdatapredsfull$phv.predictions),
+#                        filename=file.path(bpth,pfn),overwrite=T)
+#      #phv.fullpreds=raster(file.path(bpth,pfn))
+#      writeRaster(num2ucoRaster(newdatapredsfull$phvrcn.predictions),
+#                        filename=file.path(bpth,pfn),overwrite=T)
      #phvrcn.fullpreds=raster(file.path(bpth,prfn))
                                       
      return(newdatapredsfull)

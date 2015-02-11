@@ -65,7 +65,8 @@ if(style=='real-time'){
 # doidata=subset(doidata,date>=dte)
 # doidata=subset(doidata,date<ldte)
 registerDoMC(3)
-#find which recondate gives best estimate
+#find which recondate gives best estimate.
+#output dF of GLobal Moran I and objective functions for best model estimates for each yrdoy
 doylist=dlply(doidata,.(yrdoy),doDOYfit,cost,style,.parallel=F, .drop=F,.inform=F)
 # ,.paropts=list(.export=c('rundata','doXVAL'),
 #                .packages=c('ipred','MASS')
@@ -73,8 +74,8 @@ doylist=dlply(doidata,.(yrdoy),doDOYfit,cost,style,.parallel=F, .drop=F,.inform=
 # )
 cleandF=function(dF){
      mutate(dF,
-            yrdoy= attr(doylist,'split_labels')$yrdoy,
-            date=strptime(yrdoy,'%Y%j','MST'),
+            yrdoy=attr(doylist,'split_labels')$yrdoy,
+            date=as.POSIXct(strptime(yrdoy,'%Y%j','MST')),
             yr=strftime(date,'%Y'))
 }
 which_recon_date=cleandF(ldply(doylist,'[[',1))
@@ -108,7 +109,8 @@ newdatalocs.usgs=spTransform(newdatalocs,CRS('+init=epsg:5070'))
 #names(rskel)=NULL
 #rskel=projectRaster(rskel,crs=CRS('+init=epsg:5070'))
 
-#output dF of GLobal Moran I and objective functions for best model estimates for each yrdoy (by year). save predicted surfaces to netcdf by year.
-d_ply(which_recon_date,.(yr),predict_wrapper,style,newdata,newdatalocs.usgs,spatialblend,.inform=F,.parallel=F,.paropts=list(.export=ls(), .packages=.packages(all=T)))
+registerDoMC()
+# save predicted surfaces to netcdf by year.
+d_ply(which_recon_date,.(yr),predict_wrapper,style,newdata,newdatalocs.usgs,spatialblend,.inform=T,.parallel=F,.paropts=list(.export=ls(), .packages=.packages(all=T)))
 
 quit(save='no')

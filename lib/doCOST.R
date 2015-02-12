@@ -30,8 +30,8 @@ doCOST=function(mdlpreds,cost,recon.version){
      if(flag=='max'){
      whichrdate=ddply(daystats,.(date),summarise,
                     yr=strftime(unique(date),'%Y'),
-                    phvrcn_recondate=recondate[which.max(phvrcncor)],
-                    recon_costdate=recondate[which.max(reconcor)],
+                    phvrcn_recondate=recondate[which.max(phvrcnfull.cor)],
+                    recon_costdate=recondate[which.max(reconfull.cor)],
                     skill_phv=max(phv.cor),
                     skill_phvrcn=max(phvrcn.cor),
                     skill_recon=max(recon.cor),
@@ -41,8 +41,8 @@ doCOST=function(mdlpreds,cost,recon.version){
      } else if(flag=='min') {
           whichrdate=ddply(daystats,.(date),summarise,
                          yr=strftime(unique(date),'%Y'),
-                         phvrcn_recondate=recondate[which.min(phvrcncor)],
-                         recon_costdate=recondate[which.min(reconcor)],
+                         phvrcn_recondate=recondate[which.min(phvrcnfull.cor)],
+                         recon_costdate=recondate[which.min(reconfull.cor)],
                          skill_phv=min(phv.cor),
                          skill_phvrcn=min(phvrcn.cor),
                          skill_recon=min(recon.cor),

@@ -2,7 +2,7 @@
 doDOYfit<-function(doydF,cost,style) {  ## from ddply
      #set up empty dataframes to output below if there are no results.
      emptydf=function(){
-          colvec=c('yrdoy','date','yr','phvrcn_recondate','recon_costdate','skill_phv','skill_phvrcn','skill_recon')
+          colvec=c('yrdoy','date','yr','phvrcn_recondate','recon_costdate','skill_phv','skill_phvrcn','skill_recon','skill_phvfull','skill_phvrcnfull','skill_reconfull')
           c1=data.frame(matrix(NA,ncol=length(colvec)))
           colnames(c1)=colvec
 #           #

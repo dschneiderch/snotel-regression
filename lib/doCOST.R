@@ -3,20 +3,16 @@ doCOST=function(mdlpreds,cost,recon.version){
      
      if(cost=='cor') { #statistics to maximize
           costfun<-function(y,yhat) cor(y,yhat)
-          opti=max
-          which.opti=which.max
-     } else if (cost=='r2') {     
+          flag='max'
+     } else if(cost=='r2') {     
           costfun<-function(y,yhat) 1-sum((y-yhat)^2)/sum((y-mean(y,na.rm=T))^2)
-          opti=max
-          which.opti=which.max
+          flag='max'
      } else if(cost=='mae') { #statistics to minimize
           costfun<-function(y, yhat) mean(abs(yhat-y),na.rm=T)
-          opti=min 
-          which.opti=which.min
+          flag='min'
      } else if(cost=='rmse') {
           costfun<-function(y,yhat) sqrt(mean((yhat-y)^2),na.rm=T)
-          opti=min
-          which.opti=which.min
+          flag='min'
      }
      
      daystats=ddply(mdlpreds,.(yrdoy,recondate),function(x){
@@ -31,16 +27,28 @@ doCOST=function(mdlpreds,cost,recon.version){
      )
      daystats$date=as.POSIXct(strptime(daystats$yrdoy,'%Y%j'))
      
+     if(flag=='max'){
      whichrdate=ddply(daystats,.(date),summarise,
-                      yr=strftime(unique(date),'%Y'),
-                      phvrcn_recondate=recondate[which.opti(phvrcncor)],
-                      recon_costdate=recondate[which.opti(reconcor)],
-                      skill_phv=opti(phv.cor),
-                      skill_phvrcn=opti(phvrcn.cor),
-                      skill_recon=opti(recon.cor),
-                      skill_phvfull=opti(phvfull.cor),
-                      skill_phvrcnful=opti(phvrcnfull.cor),
-                      skill_reconfull=opti(reconfull.cor))
-     
+                    yr=strftime(unique(date),'%Y'),
+                    phvrcn_recondate=recondate[which.max(phvrcncor)],
+                    recon_costdate=recondate[which.max(reconcor)],
+                    skill_phv=max(phv.cor),
+                    skill_phvrcn=max(phvrcn.cor),
+                    skill_recon=max(recon.cor),
+                    skill_phvfull=max(phvfull.cor),
+                    skill_phvrcnful=max(phvrcnfull.cor),
+                    skill_reconfull=max(reconfull.cor))
+     } else if(flag=='min') {
+          whichrdate=ddply(daystats,.(date),summarise,
+                         yr=strftime(unique(date),'%Y'),
+                         phvrcn_recondate=recondate[which.min(phvrcncor)],
+                         recon_costdate=recondate[which.min(reconcor)],
+                         skill_phv=min(phv.cor),
+                         skill_phvrcn=min(phvrcn.cor),
+                         skill_recon=min(recon.cor),
+                         skill_phvfull=min(phvfull.cor),
+                         skill_phvrcnful=min(phvrcnfull.cor),
+                         skill_reconfull=min(reconfull.cor))
+     }
      return(whichrdate)
 }

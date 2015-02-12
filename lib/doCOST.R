@@ -11,7 +11,7 @@ doCOST=function(mdlpreds,cost,recon.version){
           costfun<-function(y, yhat) mean(abs(yhat-y),na.rm=T)
           flag='min'
      } else if(cost=='rmse') {
-          costfun<-function(y,yhat) sqrt(mean((yhat-y)^2),na.rm=T)
+          costfun<-function(y,yhat) sqrt(mean((yhat-y)^2,na.rm=T))
           flag='min'
      }
      
@@ -47,7 +47,7 @@ doCOST=function(mdlpreds,cost,recon.version){
                          skill_phvrcn=min(phvrcn.cor),
                          skill_recon=min(recon.cor),
                          skill_phvfull=min(phvfull.cor),
-                         skill_phvrcnful=min(phvrcnfull.cor),
+                         skill_phvrcnfull=min(phvrcnfull.cor),
                          skill_reconfull=min(reconfull.cor))
      }
      return(whichrdate)

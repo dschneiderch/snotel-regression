@@ -119,6 +119,16 @@ snotelrec$apcp=snotelrec$apcp*0.0254
 snotelrec$precip=snotelrec$precip*0.0254
 snotelrec$date=as.POSIXct(strptime(sprintf(fmt='%06d',snotelrec$snoteldate),format='%m%d%y',tz='MST'))
 
+## output snotel files we are interested in for postprocessing in matlab
+dlply(snotelrec,.(Station_ID),function(dF){
+     dF[is.na(dF)]=9999
+     dirname=paste0('data/snotel_process/',unique(dF$Station_ID))
+     cmd=paste0('mkdir' dirname)
+     system(cmd)
+     fn=file.path(dirname,paste0(unique(dF$Station_ID),'.txt'))
+     write.table(dF,fn,sep='\t',row.names=F,quote=F)
+})
+
 #finally subset snotellocs based on snotel that had records for our dates
 ind=which(snotellocs$Station_ID %in% unique(snotelrec$Station_ID) )
 snotellocs=snotellocs[ind,]

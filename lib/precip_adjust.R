@@ -6,7 +6,7 @@ precip_adjust=function(dF,meth){
      #      %  USAGE
      #      % y=dlmread('jackwhacker_gulch.txt','',1,0);
      #      % swe = y(:,2);ap=y(:,3);pp=y(:,7);
-     #      %  phat=precip_adjust(swe,ap,pp,1);
+     #      % phat=precip_adjust(swe,ap,pp,1);
      #      %
      #      %
      #      %  swe is a timeseries of SWE, with no missing values
@@ -70,8 +70,7 @@ precip_adjust=function(dF,meth){
                     phat[kseg]=dswe[kseg]
                }
           }
-          # daily corrections 
-          
+          # daily corrections        
           f1=which(s0 & dswe<=0 & pp>0)
           phat[f1]=pp[f1] #  SWE decreasing and Precip >0  =>  use Precip       
           f2=which(s0 & dswe>0 & phat>0)

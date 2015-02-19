@@ -1,5 +1,6 @@
 fixSWE = function(dF,colnm){
-print(unique(dF$Station_ID))
+     print(unique(dF$Station_ID))
+     print(unique(dF$wy))
      colnm='swe'#keep for prosperity
      # user adjustments
      if(unique(dF$Station_ID)=='05P04S' & unique(dF$wy)==2012){
@@ -34,7 +35,6 @@ print(unique(dF$Station_ID))
      
      #check for and fix swe NA
      z=dF[,colnm]
-     print(unique(dF$wy))
      #check beginning of record for NA. find first non-NA value
      if(is.na(z[1])) {
           for(k in 2:nrow(dF)){

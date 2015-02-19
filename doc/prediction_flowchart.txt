@@ -1,0 +1,121 @@
+# I think maybe there needs to be a clarification with regards to static vs dynamic model. The static model is one model per doy.  the dynamic model could be 1 of 1000 models per doy. so let me try this again.  this time with the full data flow.  I'm explicitly including inputs and outputs despite your tutelage.
+
+#I think it comes down to just a "couple" actual lines :)
+
+######
+
+someData=allDOYDF
+which_recon_date=ddply(someData,.(theDoy),doDoyFit)# figure out which dynamic model is best each day
+dlply(whichrecondate,.(doy),predict_wrapper) # predict the surface for each day using the static model and the dynamic model
+
+#this is the workhorse fitting function. with ddply, subset master dataframe for a single doy, fit static model, then iterate through all dynamic models FOR THAT DOY, and produce crossvalidated estimates. Then I'm fitting a spatial model to the residuals to create a composite prediction. then use some cost function to figure out which dynamic model is best and output a dataframe 'which_recon_date'.
+doDoyFit<-function(doyDF) {  ## from ddply
+    static_mdl<-fitStatic(doyDF) #don't need to pass datasub i think 
+	cvpreds=doXRecon(doyDF,static_mdl)
+    locs.df=transform snotellocs to albers and make dataframe
+    fullpreds=ddply(cvpreds,.(yrdoy),doSPATIAL,'xval')
+    which_recon_date=doCOST(fullpreds,'cor',recon.version)# 'cor' is the function to eval with; recon.version is in global env; do I need t pass these in? don't need to pass in fullpreds?
+ 	return(which_recon_date)
+}
+
+#fits static model for a doy
+fitStatic <- function(dF){
+    fit 1 model for the day
+    return(static_mdl)
+}
+
+#takes static model and fits all iterations of dyn model to get cross validated predictions.
+doXRecon <- function(dF,static_mdl){
+    ldply(as.list(unique(someData$recondate)),CVwrapper)
+}
+
+# produce cross val predictions for all dyn iterations for a given doy.
+CVwrapper <- function(xrdate,static_mdl){
+    dyn_mdl=fitDynamic(xrdate,static_mdl)
+    cvpreds=doXVAL(static_mdl,dyn_mdl)
+return(cvpreds)
+}   
+
+#fit the dynamic model for a single doy and a single dyn iteration.
+fitDynamic <- function(doyDF,xrdate,static_mdl)  { 
+	doyDF$recon=someData[recondate==xrdate,'recon']	
+    newformula=paste(formula(static_mdl) ' + recon')
+    dyn_mdl=fit(newformula)
+    return(dyn_mdl)
+   }
+
+#does cross validation for a doy and an iteration
+doXVAL <- function(doy_rdoyDF,static_mdl,dyn_mdl){
+# this doesn't know about doyDF from fitDynamic, right? but could use data stored in model object?
+	static.pred=errorest(static_mdl,data=static_mdl$data,...)
+   	dynamic.pred=errorest(dyn_mdl,data=dyn_mdl$data,...)
+return(data.frame(static.pred, dynamic.preds, snotel))
+}
+
+    
+#takes estimates residuals at snotel locations and fits krige model. adds krige estimates back to predictions (either at snotel locs or for entire domain)
+doSPATIAL <- function(dF, app, newdata){
+# dF is dataframe with relevant data
+# x contains the prediction points (newdata)
+        mutate(dF,
+    	    phvresid=phv.predictions-snotel#phv.prediction is static.pred
+		    phvrcnresid=phvrcn.predictions-snotel#phvrcn.prediction is dynamic.pred
+    		reconresid=recon-snotel)
+        residkr=Krig(as.matrix(locs.df[,c('x','y')]),phvresid)    
+    if(app=='xval'){
+        x=as.matrix(locs.df[,c('x','y')])#locs.df is available?          		  									    
+        phv.fullpred=dF$phv.predictions+predict(residkr,x=x)
+        phvrcn.fullpred=dF$phvrcn.predictions+predict(residkr,x=x,y=phvrcnresid)
+    return(
+    data.frame(
+	    	snotel=dF$snotel,
+			recon=dF$recon,
+			phvresid,
+			phvrcnresid,
+			reconresid,
+			phv.predictions=dF$phv.pred,
+			phvrcn.pred=dF$phvrcn.predictions), 
+			phv.fullpred,
+			phvrcn.fullpred)
+        }
+    if(app=='predict'){
+        x=as.matrix(newdata[,c('x','y')])       		  									    
+        phv.fullpred=newdata$phv.predictions+predict(residkr,x=x)
+        phvrcn.fullpred=newdata$phvrcn.predictions+predict(residkr,x=x,y=phvrcnresid)        
+        return(
+        data.frame(
+            phv.fullpred,
+            phvrcn.fullpred)
+            )
+        }
+          
+ 
+#use static model and best dynamic model to produce surface estimates for a doy. iterate by year. returns rasters  for stacking       
+predict_surfaces=function(yr,dF,newdata){
+    dF[year(dF$date)==yr,]
+    xrdate=dF$bestrecondate
+    static_mdl=fitStatic(dF) #I guess this is happening twice...
+    dyn_mdl=fitDynamic(dF,xrdate,static_mdl)
+	static.pred=predict(static_mdl,newdata)# 
+	dyn.pred=predict(dyn_mdl,newdata)         
+	newdatapreds=data.frame(
+	    newdata,
+	    phv.predictions=static.pred,
+	    phvrcn.predicrtions=dyn.pred)
+	locpreds=data.frame(
+		phv.predictions=predict(static_mdl)
+		phvrcn.predictions=predict(dyn_mdl)
+		snotel=static_mdl$data$snotel,
+	    recon=static_mdl$data$recon)	## need to figure out how to unscale this. keep scale attr in model object?
+	fullpreds=doSPATIAL(locpreds, 'predict', newdatapreds)# newdatapreds has newdata locations and regression predictions
+	staticr=raster(fullpreds$phv.fullpred,...)#from raster package.
+	dynr=raster(fullpreds$phvrcn.fullpred,...)
+	return(list(staticr, dynr))
+}
+
+#allows iteration of predict_surfaces by year to create yearly stacks and ncdf output
+predict_wrapper <- function(){
+	 rasterlist=llply(as.list(unique(someData$yr)), predict_surfaces)
+	 stck=llpy(rasterlist,do.call,'stack')#or something like that..
+	 writeRaster(stck,'netcdf')#I want to save yearly files of netcdf with x,y,z,t variables.
+}

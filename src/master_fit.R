@@ -60,11 +60,10 @@ spatialblend='blend'#flag to do geostatistical blending or not (prediction stage
 if(style=='real-time'){
      doidata=subset(doidata,yr>2000)
 }
-# dte=strptime('20010524','%Y%m%d','MST')
-# ldte=strptime('20020302','%Y%m%d','MST')
-# doidata=subset(doidata,date>=dte)
-# doidata=subset(doidata,date<ldte)
-registerDoMC(3)
+#  dte=strptime('20010524','%Y%m%d','MST')
+#  ldte=strptime('20020302','%Y%m%d','MST')
+#  doidata=subset(doidata,date>=dte)
+#  doidata=subset(doidata,date<ldte)
 #find which recondate gives best estimate.
 #output dF of GLobal Moran I and objective functions for best model estimates for each yrdoy
 doylist=dlply(doidata,.(yrdoy),doDOYfit,cost,style,.parallel=F, .drop=F,.inform=F)

@@ -1,4 +1,4 @@
-fixSWE = function(dF,colnm){
+fixNA = function(dF,colnm){
      dF=dF[order(dF$Station_ID,dF$date),]
      dF$mth=as.numeric(strftime(dF$date,'%m'))
      summerNA=which(dF$mth>=7 & dF$mth<11 & is.na(dF[,colnm]))

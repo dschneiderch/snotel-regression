@@ -5,8 +5,8 @@ load.project()
 #: reads in swe.dat from recon output from selected version, saves usgs  projected stack and snotel values to recondata_v#.RData
 ## ----  Which Recon version? -----
 
-yrs=seq(2001,2011)
-recon.version='v3.1'
+yrs=seq(2000,2011)
+recon.version='v3.2'
 reconbase='/Volumes/hydroProjects/SWE/Rockies/SWE_SNODIS/recon/'
 
 ## ------
@@ -56,7 +56,7 @@ fn=list.files(recondir,recursive=T,full.names=T,pattern='swe.dat$')
 ## pathlen=unlist(lapply(yrs,length))[1]
 ## yrs=as.numeric(unlist(lapply(yrs,'[',pathlen-1)) )
 dim1=ncdim_def('Long','degree',seq(-112.25,-104.125,0.00416666667))
-dim2=ncdim_def('Lat','degree',seq(33,43.75,0.00416666667))
+dim2=ncdim_def('Lat','degree',seq(43.75,33,-0.00416666667))
 
 
 for(iyr in 1:length(yrs)){
@@ -68,14 +68,15 @@ for(iyr in 1:length(yrs)){
      assign(paste0('snotelrecon',yr),snotelrecon)
      #
 #      registerDoMC(3)#bug in aaply. parallel fails :(
-     mm=getValues(recon.stack)
-     vals=aaply(mm,2,.parallel=F,.inform=F,function(m){
-          mat=matrix(m,nrow=2580,byrow=T)#fill byrow because raster pkg
-          mat=mat[nrow(mat):1,]#invert to match netcdf dims
-          return(mat)
-     })
-     valwrite=aperm(vals,c(3,2,1))#permute to lat, long, time
-     
+#      mm=getValues(recon.stack)
+#      vals=aaply(mm,2,.parallel=F,.inform=F,function(m){
+#           mat=matrix(m,nrow=2580,byrow=T)#fill byrow because raster pkg
+#           mat=mat[nrow(mat):1,]#invert to match netcdf dims
+#           return(mat)
+#      })
+#      valwrite=aperm(vals,c(3,2,1))#permute to lat, long, time
+valwrite=getValues(recon.stack)#this is easy. make sure that y dim is backwards for netcdf
+    
 #netcdf write path
 fnnc=file.path(pathout,paste0('recondata_',yr,'_',recon.version,'.nc'))
 #setup netcdf time dimension. different every year (20000301...20000831,20010301...20010831,etc)

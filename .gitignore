@@ -6,3 +6,6 @@ diagnostics/
 data/
 cache/
 graphs/
+.sync/
+profiling/
+tests/

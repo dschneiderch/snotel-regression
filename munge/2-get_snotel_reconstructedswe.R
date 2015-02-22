@@ -31,7 +31,7 @@ get_recon_rasterstack <- function(filename){
           mat=mat[nrow(mat):1,]#flip in y-direction to make right side map
           r=raster(mat)#rasters use column major cellnums instead row major, i.e. cell nums count up left to right, top to bottom instead of normal matrix way of top to bottom, left to right.
           extent(r) <- c(-112.25,-104.125,33,43.75)
-          projection(r) <- '+proj=longlat +datum=NAD83'
+          projection(r) <- '+proj=longlat +datum=WGS84'
           names(r) <- as.character(strftime(dt+24*3600*(i-1),format='%Y%m%d'))
           s=addLayer(s,r)
      }

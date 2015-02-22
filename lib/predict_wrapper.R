@@ -6,6 +6,7 @@ predict_wrapper <- function(rdtsdF,style,newdata,newdatalocs,spatialblend){
      bpth=paste0('diagnostics/rswe_',recon.version,'/fullpreds')
      
      newdatapredsfull=ddply(rdtsdF,.(yrdoy),predict_surfaces,snotellocs.usgs,newdata,newdatalocs,spatialblend,bpth,.inform=F,.parallel=F)#,.paropts=list(.export=ls(), .packages=.packages(all=T)))     
+     watermask=getValues(raster('data/cs_NHD_MOD44_water_mask.tif'))
      
      #output rasters of each model type.
      dim1=ncdim_def('Long','degree',seq(-112.25,-104.125,0.00416666667))
@@ -21,10 +22,10 @@ predict_wrapper <- function(rdtsdF,style,newdata,newdatalocs,spatialblend){
      
      d_ply(newdatapredsfull,.(yrdoy),function(dF){
           #do some data gymnastics to get it in the right order. for dim1 and dim2 min to max, data should be left to right, bottom to top
-          val=matrix(dF$phv.fullpred,nrow=2580,byrow=T)#byrow because predictors were originally from rasterstack
+          val=matrix((dF$phv.fullpred*watermask),nrow=2580,byrow=T)#byrow because predictors were originally from rasterstack
           ncvar_put(phv.nc, var, vals=val,start=c(1,1,which(unique(dF$yrdoy)==tind)),count=c(-1,-1,1))
           #
-          val=matrix(dF$phvrcn.fullpred,nrow=2580,byrow=T)
+          val=matrix((dF$phvrcn.fullpred*watermask),nrow=2580,byrow=T)
           ncvar_put(phvrcn.nc,var,vals=val,start=c(1,1,which(tind==unique(dF$yrdoy))),count=c(-1,-1,1))
           #
           ncatt_put(phv.nc,0,'proj4string','+proj=longlat +datum=WGS84')

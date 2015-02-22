@@ -8,17 +8,17 @@ if(!is.na(mdate)){
      get_sca=function(dte){
           yr=strftime(dte,'%Y')
           if(dte<max(recondata$recondate) & as.numeric(strftime(dte,'%m')) >= 3){
-               rfn=paste0('data/recon_',recon.version,'/recondata_',yr,'_',recon.version,'.RData')
-               if(!exists(paste0('recon',yr),envir=.GlobalEnv))  load(rfn,envir=.GlobalEnv)
-               tmp=get(paste0('recon',yr),envir=.GlobalEnv)
+               rfn=paste0('data/recon_',recon.version,'/recondata_',yr,'_',recon.version,'.nc')
+               ncstack=stack(rfn)
                stckdate=strftime(dte,'X%Y%m%d')
           } else {     
                print('using modscag fsca for masking. may not be completely cloudfree')
-               tmp=stack(file.path('data','selectdates','modscag',paste0('fsca',yr,'.nc')))    
+               sfn=file.path('data','selectdates','modscag',paste0('fsca',yr,'.nc'))
+               ncstack=stack(sfn)
                stckdate=strftime(dte,'X%Y%j')
           }
-          rind=grep(stckdate,names(tmp))
-          vals=tryCatch({getValues(tmp[[rind]])},error=function(x) {
+          rind=grep(stckdate,names(ncstack))
+          vals=tryCatch({getValues(ncstack[[rind]])},error=function(x) {#this error should never happen
           print(paste0('the date ',dte,' was not available in the selected sca image'))})
      }
      

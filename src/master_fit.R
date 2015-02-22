@@ -31,13 +31,11 @@ setcores <- function(cl, nodes) {
    clusterApply(cl, nodes$Freq, f)
  }
 setcores(cl, nodes)
-allocated.cores=2
+
 
 # get modelling data --------------------------------------------------------
 mdldata=swedata[swedata$mth<6,]#if changing mth<6, need to change dates2model too
 mdldata$recondate=mdldata$date
-mdldata=mdldata[order(mdldata$date,mdldata$Station_ID),]
-mdldata=fixNA(mdldata,'snotel')#this does a very simply linear interpolation. 
 
 # select dates to model ----------
 # Option A will only model dates for dates selected from modscag images.
@@ -89,7 +87,7 @@ write.table(moran.df,paste0('diagnostics/rswe_',recon.version,'/',style,'_moran_
 which_recon_date=read.table(paste0('diagnostics/rswe_',recon.version,'/',style,'_recondate_selection_',cost,'.txt'),sep='\t',header=T,stringsAsFactors=F)
 which_recon_date$date=as.POSIXct(strptime(which_recon_date$date,'%Y-%m-%d',tz='MST'))
 which_recon_date$phvrcn_recondate=as.POSIXct(strptime(which_recon_date$phvrcn_recondate,'%Y-%m-%d',tz='MST'))
-which_recon_date$reconcordate=as.POSIXct(strptime(which_recon_date$reconcordate,'%Y-%m-%d',tz='MST'))
+which_recon_date$recon_costdate=as.POSIXct(strptime(which_recon_date$recon_costdate,'%Y-%m-%d',tz='MST'))
 str(which_recon_date)
 #####
 
@@ -98,7 +96,7 @@ str(which_recon_date)
 snotellocs.usgs=spTransform(snotellocs,CRS('+init=epsg:5070'))
 newdata=as.data.frame(scale(ucophv))#ucophv is automatically loaded with project and  contains newdata for prediction to domain
 newdatalocs=SpatialPoints(ucophv[,c('Long','Lat')])
-proj4string(newdatalocs)='+proj=longlat +datum=NAD83'
+proj4string(newdatalocs)='+proj=longlat +datum=WGS84'
 newdatalocs.usgs=spTransform(newdatalocs,CRS('+init=epsg:5070'))
 #
 #geope=projectExtent(ucophv.stack[[1]],crs=projection(ucophv.stack))

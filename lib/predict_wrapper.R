@@ -9,7 +9,7 @@ predict_wrapper <- function(rdtsdF,style,newdata,newdatalocs,spatialblend){
      
      #output rasters of each model type.
      dim1=ncdim_def('Long','degree',seq(-112.25,-104.125,0.00416666667))
-     dim2=ncdim_def('Lat','degree',seq(33,43.75,0.00416666667))
+     dim2=ncdim_def('Lat','degree',seq(43.75,33,-0.00416666667))
      dim3=ncdim_def('time','yrdoy',unlim=T,vals=as.numeric(unique(newdatapredsfull$yrdoy)))
      var=ncvar_def('swe','meters',dim=list(dim1,dim2,dim3),missval=-99,longname='snow water equivalent',compression=6)
      yr=unique(rdtsdF$yr)
@@ -20,17 +20,15 @@ predict_wrapper <- function(rdtsdF,style,newdata,newdatalocs,spatialblend){
      tind=unique(newdatapredsfull$yrdoy)
      
      d_ply(newdatapredsfull,.(yrdoy),function(dF){
-          #do some data gymnastics to get it in the right order
-          val=matrix(dF$phv.fullpred,nrow=2580,byrow=T)
-          val=t(val[nrow(val):1,])
+          #do some data gymnastics to get it in the right order. for dim1 and dim2 min to max, data should be left to right, bottom to top
+          val=matrix(dF$phv.fullpred,nrow=2580,byrow=T)#byrow because predictors were originally from rasterstack
           ncvar_put(phv.nc, var, vals=val,start=c(1,1,which(unique(dF$yrdoy)==tind)),count=c(-1,-1,1))
           #
           val=matrix(dF$phvrcn.fullpred,nrow=2580,byrow=T)
-          val=t(val[nrow(val):1,])          
           ncvar_put(phvrcn.nc,var,vals=val,start=c(1,1,which(tind==unique(dF$yrdoy))),count=c(-1,-1,1))
           #
-          ncatt_put(phv.nc,0,'proj4string','+proj=longlat +datum=NAD83')
-          ncatt_put(phvrcn.nc,0,'proj4string','+proj=longlat +datum=NAD83')
+          ncatt_put(phv.nc,0,'proj4string','+proj=longlat +datum=WGS84')
+          ncatt_put(phvrcn.nc,0,'proj4string','+proj=longlat +datum=WGS84')
      })
      nc_close(phv.nc)
      nc_close(phvrcn.nc)

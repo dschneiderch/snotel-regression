@@ -64,23 +64,23 @@ if(style=='real-time'){
 #  doidata=subset(doidata,date<ldte)
 #find which recondate gives best estimate.
 #output dF of GLobal Moran I and objective functions for best model estimates for each yrdoy
-doylist=dlply(doidata,.(yrdoy),doDOYfit,cost,style,.parallel=F, .drop=F,.inform=F)
-# ,.paropts=list(.export=c('rundata','doXVAL'),
-#                .packages=c('ipred','MASS')
-# )
-# )
-cleandF=function(dF){
-     mutate(dF,
-            yrdoy=attr(doylist,'split_labels')$yrdoy,
-            date=as.POSIXct(strptime(yrdoy,'%Y%j','MST')),
-            yr=strftime(date,'%Y'))
-}
-which_recon_date=cleandF(ldply(doylist,'[[',1))
-moran.df=cleandF(ldply(doylist,'[[',2))
+# doylist=dlply(doidata,.(yrdoy),doDOYfit,cost,style,.parallel=F, .drop=F,.inform=F)
+# # ,.paropts=list(.export=c('rundata','doXVAL'),
+# #                .packages=c('ipred','MASS')
+# # )
+# # )
+# cleandF=function(dF){
+#      mutate(dF,
+#             yrdoy=attr(doylist,'split_labels')$yrdoy,
+#             date=as.POSIXct(strptime(yrdoy,'%Y%j','MST')),
+#             yr=strftime(date,'%Y'))
+# }
+# which_recon_date=cleandF(ldply(doylist,'[[',1))
+# moran.df=cleandF(ldply(doylist,'[[',2))
 
 
-write.table(which_recon_date,paste0('diagnostics/rswe_',recon.version,'/',style,'_recondate_selection_',cost,'.txt'),sep='\t',row.names=F,quote=F)     
-write.table(moran.df,paste0('diagnostics/rswe_',recon.version,'/',style,'_moran_info_for_recondate_selection_',cost,'.txt'),sep='\t',row.names=F,quote=F)     
+# write.table(which_recon_date,paste0('diagnostics/rswe_',recon.version,'/',style,'_recondate_selection_',cost,'.txt'),sep='\t',row.names=F,quote=F)     
+# write.table(moran.df,paste0('diagnostics/rswe_',recon.version,'/',style,'_moran_info_for_recondate_selection_',cost,'.txt'),sep='\t',row.names=F,quote=F)     
 
 
 ##### To continue from previous run
@@ -108,6 +108,6 @@ newdatalocs.usgs=spTransform(newdatalocs,CRS('+init=epsg:5070'))
 
 registerDoMC()
 # save predicted surfaces to netcdf by year.
-d_ply(which_recon_date,.(yr),predict_wrapper,style,newdata,newdatalocs.usgs,spatialblend,.inform=T,.parallel=F,.paropts=list(.export=ls(), .packages=.packages(all=T)))
+d_ply(which_recon_date,.(yr),predict_wrapper,style,newdata,newdatalocs.usgs,spatialblend,.inform=F,.parallel=T,.paropts=list(.export=ls(), .packages=.packages(all=T)))
 
 quit(save='no')

@@ -1,18 +1,18 @@
 #takes estimates residuals at snotel locations and fits krige model. substracts krige estimates from predictions (either at snotel snotellocs.usgs or for entire domain)
-doSPATIAL=function(dF, snotellocs.usgs, app, newdata=NULL,bpth,spatialblend){
+doSPATIAL=function(dF, snotellocs.usgs, app, newdatapreds=NULL,bpth,spatialblend){
      dF=mutate(dF,
           phvresid=phv.predictions-snotel,#
           phvrcnresid=phvrcn.predictions-snotel,
           reconresid=recon-snotel)
      locsmat=as.matrix(as.data.frame(snotellocs.usgs)[,c('x','y')])
-     #print(nrow(locsmat))
-     #print(str(dF))
-     #kr=Krig(locsmat,dF$phvresid,theta=200000)
-     rresidkr=Krig(locsmat,dF$reconresid,theta=200000)
-     sresidkr=Krig(locsmat,dF$phvresid,theta=200000)
-     dresidkr=Krig(locsmat,dF$phvrcnresid,theta=200000)
-     #residtps=Tps(locsmat,dF$phvresid)
-     #print(residkr)
+     covrange=300000
+    rlambda=summary(Krig(locsmat,dF$reconresid,theta=covrange,cov.function="wendland.cov"))$lambda
+  rresidkr=mKrig(locsmat,dF$reconresid,theta=covrange,lambda=rlambda,cov.function="wendland.cov")
+    slambda=summary(Krig(locsmat,dF$phvresid,theta=covrange,cov.function="wendland.cov"))$lambda     
+    sresidkr=mKrig(locsmat,dF$phvresid,theta=covrange,lambda=slambda,cov.function="wendland.cov")
+    dlambda=summary(Krig(locsmat,dF$phvrcnresid,theta=covrange,cov.function="wendland.cov"))$lambda     
+     dresidkr=mKrig(locsmat,dF$phvrcnresid,theta=covrange,lambda=dlambda,cov.function="wendland.cov")
+    
      if(app=='xval'){
           phv.fullpred=dF$phv.predictions-predict(sresidkr,x=locsmat)
           phvrcn.fullpred=dF$phvrcn.predictions-predict(dresidkr,x=locsmat)
@@ -39,18 +39,18 @@ doSPATIAL=function(dF, snotellocs.usgs, app, newdata=NULL,bpth,spatialblend){
 #           pfn=paste0('fullpred_phv-',unique(dF$date),'-',spatialblend,'.grd')
 #           prfn=paste0('fullpred_phvrcn-',unique(dF$date),'-',spatialblend,'.grd')
           #
-          phv.fullpred=newdata$phv.predictions-predict(sresidkr,x=newdata[,c('x','y')])
-          phvrcn.fullpred=newdata$phvrcn.predictions-predict(dresidkr,x=newdata[,c('x','y')])        
+          phv.fullpred=newdatapreds$phv.predictions-predict(sresidkr,x=newdatapreds[,c('x','y')])
+          phvrcn.fullpred=newdatapreds$phvrcn.predictions-predict(dresidkr,x=newdatapreds[,c('x','y')])        
           return(
                data.frame(
-                    phv.predictions=newdata$phv.predictions,
-                    phvrcn.predictions=newdata$phvrcn.predictions,
+                    phv.predictions=newdatapreds$phv.predictions,
+                    phvrcn.predictions=newdatapreds$phvrcn.predictions,
                     phv.fullpred,
                     phvrcn.fullpred)
                )
 #           rs=interpolate(rskel,sresidkr,xyOnly=T)
 #           rs=projectRaster(rs,geope,method='bilinear',crs=projection(geope))
-#           rpred=num2ucoRaster(newdata$phv.predictions)
+#           rpred=num2ucoRaster(newdatapreds$phv.predictions)
 #           #plot(rpred-rs)
 #           writeRaster(rpred-rs,filename=file.path(bpn,pfn),overwrite=T)
 #           phv.fullpreds=raster(file.path(bpn,pfn))
@@ -58,7 +58,7 @@ doSPATIAL=function(dF, snotellocs.usgs, app, newdata=NULL,bpth,spatialblend){
 #           dresidkr=Krig(locsmat,dF$phvrcnresid,theta=200000)
 #           rs=interpolate(rskel,dresidkr,xyOnly=T)
 #           rs=projectRaster(rs,geope,method='bilinear',crs=projection(geope))
-#           rpred=num2ucoRaster(newdata$phvrcn.predictions)
+#           rpred=num2ucoRaster(newdatapreds$phvrcn.predictions)
 #           #plot(rpred-rs)
 #           writeRaster(rpred-rs,filename=file.path(bpn,prfn),overwrite=T)
 #           phvrcn.fullpreds=raster(file.path(bpn,prfn))

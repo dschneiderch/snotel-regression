@@ -23,7 +23,9 @@ skill.m=melt(skill[,c('date','yr','skill_phv','skill_phvrcn','skill_phvfull','sk
 skill.m=cbind(skill.m,dailyavg)
 skill.m$Rrmse=with(skill.m,value/avgsnotel)
 } else if(cost=='r2'){
-	skill.m=melt(skill[,c('date','yr','skill_phv','skill_phvrcn','skill_phvfull','skill_phvrcnfull','yrdoy')],.(date,yr,yrdoy))
+    costshort='r2'
+    costlong=bquote(r^2)
+    skill.m=melt(skill[,c('date','yr','skill_phv','skill_phvrcn','skill_phvfull','skill_phvrcnfull','yrdoy')],.(date,yr,yrdoy))
 }
 
 ggplot(skill.m)+

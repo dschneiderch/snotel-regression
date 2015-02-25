@@ -44,16 +44,16 @@ dateselect=dates2model(opt='B')
 ind=mdldata$date %in% dateselect
 doidata=mdldata[ind,]
 
-
 # select recon dates to evaluate model with
 #recondata is used to iterate through recondates. 
-#these dates can be different than olddata/mdldata if wanted but must include at least 1 date before the mdl date if used in real-time mode
+#these dates can be different than olddata/mdldata if wanted but must include at least 1 date before each mdl date if used in real-time mode
 recondata=subset(mdldata, (dy==1 | dy==15) & yr!=2012 ) 
 
 # run model -------------------
 cost='r2'#cor, r2, mae, rmse
 style='real-time'#'real-time','reanalysis'
 spatialblend='blend'#flag to do geostatistical blending or not (prediction stage only; always does in the CV stage). blending takes long time for the entire domain..
+output='points' #'surface' #just predict at snotel pixels #for 'points' spatialblend must also be 'blend'
 
 if(style=='real-time'){
      doidata=subset(doidata,yr>2000)
@@ -65,10 +65,6 @@ if(style=='real-time'){
 #find which recondate gives best estimate.
 #output dF of GLobal Moran I and objective functions for best model estimates for each yrdoy
 # doylist=dlply(doidata,.(yrdoy),doDOYfit,cost,style,.parallel=F, .drop=F,.inform=F)
-# # ,.paropts=list(.export=c('rundata','doXVAL'),
-# #                .packages=c('ipred','MASS')
-# # )
-# # )
 # cleandF=function(dF){
 #      mutate(dF,
 #             yrdoy=attr(doylist,'split_labels')$yrdoy,
@@ -106,8 +102,9 @@ newdatalocs.usgs=spTransform(newdatalocs,CRS('+init=epsg:5070'))
 #names(rskel)=NULL
 #rskel=projectRaster(rskel,crs=CRS('+init=epsg:5070'))
 
+# which_recon_date=which_recon_date[c(1,2,32,33),]
 registerDoMC()
 # save predicted surfaces to netcdf by year.
-d_ply(which_recon_date,.(yr),predict_wrapper,style,newdata,newdatalocs.usgs,spatialblend,.inform=F,.parallel=T,.paropts=list(.export=ls(), .packages=.packages(all=T)))
+d_ply(which_recon_date,.(yr),predict_wrapper,style,newdata,newdatalocs.usgs,spatialblend,.inform=T,.parallel=F,.paropts=list(.export=ls(), .packages=.packages(all=T)))
 
-quit(save='no')
+#quit(save='no')

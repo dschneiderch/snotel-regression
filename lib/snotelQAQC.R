@@ -65,7 +65,7 @@ snotelQAQC=function(snotelrec,precipmeth){
                theme_minimal()
           ggsave(plot=g,filename=paste0(dirname,'/plots/snotelrec_',unique(dF$Station_ID),'_precipmeth',precipmeth,'.pdf'),height=3,width=6)
           ## ggplot is giving a warning that 23 rows contain missing values but snotelrec doesn't have any missing values so something in dFplot after melt?
-          return(dFqc2)
+          return(dFqc2[,-ncol(dFqc2)])
      })
      return(snotelrec)
 }

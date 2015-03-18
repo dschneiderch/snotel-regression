@@ -10,9 +10,9 @@ doXRecon <- function(doydF,static_mdl,style){
      print(paste(style,'rdates:',length(rdates)))
 #    print(str(rdates))
 # doyfits=data.frame()
-     if( length(rdates)!=0 ) {
-#           print(paste(style,'rdates:',length(rdates)))
-          doyfits=ldply(as.list(rdates),CVwrapper,doydF,static_mdl, .parallel=F,.inform=T)
-     }
-return(doyfits)
+     # if( length(rdates)!=0 ) {
+          doyfits=ldply(as.list(rdates),CVwrapper,doydF,static_mdl, .parallel=F,.inform=F)
+          return(doyfits)
+     # }
+
   }

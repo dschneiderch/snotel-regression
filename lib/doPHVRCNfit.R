@@ -1,13 +1,20 @@
-doPHVRCNfit <- function(xrdate,doydF,static_mdl){
+doPHVRCNfit <- function(xrdate,doydF,static_mdl,reconvec=NULL){
      oldopt=options()
 #      print(options('warn'))
      on.exit(options(oldopt))
      options(warn=2)
+
+     mdldata=arrange(mdldata,date,Station_ID)
+     mdldata=mdldata[mdldata$Station_ID %in% doydF$Station_ID,]
+     if(is.null(reconvec)){
      #get appropriate recon data
      doydF$recon=mdldata[mdldata$recondate==xrdate,'recon']
      doydF$recondate=mdldata[mdldata$recondate==xrdate,'recondate']
      doydF$recon=scale(doydF$recon)
-     
+     } else {
+          doydF$recon=scale(reconvec)
+          doydF$recondate='opt'
+     }
      # fix snotel record so there are no zeros
      snotelmdl=doydF$snotel
      snotelmdl=snotelmdl+runif(1,0,0.0001) # doesn't converge usually if there are 0s

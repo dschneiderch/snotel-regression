@@ -1,7 +1,7 @@
 library('ProjectTemplate')
-#setwd('~/Documents/R/snotel-regression_project')
-load.project()
-
+ #setwd('~/Documents/R/snotel-regression_project')
+rm(list=ls()
+load.project(list(cache_loading=F))
 
 ## data must have historical/<STATE>
 ## set dates
@@ -18,8 +18,8 @@ Nlimit=43.75;
 Slimit=33;
 boxpoly=Polygon(matrix(c(Wlimit,Elimit,Elimit,Wlimit,Wlimit,Slimit,Slimit,Nlimit,Nlimit,Slimit),nrow=5),hole=F)
 boxpolylist=Polygons(list(boxpoly),'uppercolorado')
-geobox=SpatialPolygons(list(boxpolylist),proj4string=CRS('+proj=longlat +datum=NAD83'))
-#usgsbox=spTransform(geobox,CRS('+init=epsg:5070'))
+geobox=SpatialPolygons(list(boxpolylist),proj4string=CRS('+proj=longlat +datum=WGS84'))
+usgsbox=spTransform(geobox,CRS('+init=epsg:5070'))
 
 #increase box by 100km -- gaah don't bother because you don't have recon data outside
 #usgsbox_over=gBuffer(usgsbox,width=100000,capStyle='SQUARE')
@@ -28,7 +28,7 @@ geobox=SpatialPolygons(list(boxpolylist),proj4string=CRS('+proj=longlat +datum=N
 ## get snotel coordinates
 snotellist=read.csv('data/SNOTEL_MASTER.csv',sep=',',header=T,stringsAsFactors=F,strip.white=T)
 coordinates(snotellist) <- ~Longitude+Latitude
-crs(snotellist) <- crs(geobox)
+crs(snotellist) <- CRS('+proj=longlat +datum=WGS84')
 #snotellist=spTransform(snotellist,CRS('+init=epsg:5070'))
 
 ## compare snotel locations to uppercolorado polygon
@@ -129,14 +129,14 @@ snotelrec$wy=water_yr(snotelrec$date)
 snotelrec$mth=as.numeric(strftime(snotelrec$date,'%m'))
 snotelrec$dy=as.numeric(strftime(snotelrec$date,'%d'))
 
-tmp=snotelrec
-
-snotelrec=tmp
 ## output snotel files we are interested in with qa and qc
 snotelrec=snotelQAQC(snotelrec,precipmeth=1)
 
-#finally subset snotellocs based on snotel that had records for our dates
-ind=which(snotellocs$Station_ID %in% unique(snotelrec$Station_ID) )
-snotellocs=snotellocs[ind,]
+# write.table(snotelrec,'data/fassnacht/snotelrec_1993_qc1_precipmeth1.txt',sep='\t',row.names=F,quote=F)
+
+## this was origionally done based on 2000-2012 available station data. but easier to subset in master_* files when you have other years.
+# #finally subset snotellocs based on snotel that had records for our dates
+# ind=which(snotellocs$Station_ID %in% unique(snotelrec$Station_ID) )
+# snotellocs=snotellocs[ind,]
 
 save(list=c('snotelrec', 'snotellocs','current_wy','cutoff_date','usgsbox','geobox'),file='cache/snoteldata.RData')

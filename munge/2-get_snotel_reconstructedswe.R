@@ -1,13 +1,13 @@
 library('ProjectTemplate')
-#setwd('~/GoogleDrive/snotel-regression_project')
+setwd('~/GoogleDrive/snotel-regression_project')
 load.project()
 
 #: reads in swe.dat from recon output from selected version, saves usgs  projected stack and snotel values to recondata_v#.RData
 ## ----  Which Recon version? -----
 
-yrs=seq(2000,2011)
-recon.version='v3.2'
-reconbase='/Volumes/hydroProjects/SWE/Rockies/SWE_SNODIS/recon/'
+yrs=2012#seq(2000,2011)
+recon.version='v3.1'
+reconbase='/Volumes/hydroProjects/SWE/Rockies/SWE_SNODIS/recon'
 
 ## ------
 
@@ -62,7 +62,8 @@ dim2=ncdim_def('Lat','degree',seq(43.75,33,-0.00416666667))
 for(iyr in 1:length(yrs)){
      yr=as.numeric(yrs[iyr])
      print(yr)
-     recon.stack=get_recon_rasterstack(fn[iyr])
+     ifn=fn[grep(yr,fn)]
+     recon.stack=get_recon_rasterstack(ifn)
      #recon.stack=projectRaster(recon.stack,crs=CRS('+init=epsg:5070'),method='ngb')
      snotelrecon=get_snotel_reconswe(recon.stack)
      assign(paste0('snotelrecon',yr),snotelrecon)

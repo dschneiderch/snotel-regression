@@ -29,7 +29,7 @@ doXVAL <- function(doy_rdoydF,static_mdl,dyn_mdl,rcn.sig.phv){
           snotel=doy_rdoydF$snotel,
           phv.predictions=phv$predictions,
           phvrcn.predictions=phvrcn$predictions,
-          recon=unscale_vec(doy_rdoydF$recon),
+          reconrt=unscale_vec(doy_rdoydF$recon),
           sig=rcn.sig.phv)
      )
 }

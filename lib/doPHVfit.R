@@ -10,7 +10,7 @@ doPHVfit=function(dF){
           glm(snotel ~ Lat+Elev+Eastness+Northness+Slope+RegionalSlope+RegionalEastness+RegionalNorthness+FtprtW+Wbdiff+NWbdiff+Wd2ocean+1,family=gaussian(link='log'),data=dF)}
           ,TRUE)
      failed=inherits(mdl,'try-error')
-     failed
+     
      if(!failed) {
           ### Reduce with stepaic
           mdl.stepaic.phv=tryCatch({

@@ -1,5 +1,6 @@
 library('ProjectTemplate')
-load.project()
+setwd('~/Documents/snotel-regression_project')
+load.project(list(cache_loading=T))
 
 
 fn.tmin='data/topowx-stationdata/raw/topowx_final_stn_obs_tmin.nc'
@@ -46,19 +47,33 @@ twx.t=function(fn,tvar){
 }
      
 
-
 #extract tmin
 twx.tmin=twx.t(fn.tmin,'tmin')
 #extract tmax
 twx.tmax=twx.t(fn.tmax,'tmax')
 #combine variables into 1 dataframe
 twx.snotel=cbind(twx.tmin,tmax=twx.tmax$tmax)
+
+#2 other stations not in original nc files
+sta=c("05G04S","08S08S")
+stadf=ldply(sta,function(x){
+     fn=paste0('data/topowx-stationdata/raw/SNOTEL_',x,'.csv')
+     df=read.csv(fn,header=T)
+     df$DATE=as.POSIXct(df$DATE,tz='MST')
+     df=df[df$DATE>=as.POSIXct('1999-10-01',tz='MST') & df$DATE<=as.POSIXct('2012-09-30',tz='MST'),]
+     dfout=data.frame(date=df$DATE,Station_ID=x)
+     dfout$tmin=with(df,ifelse(TMIN_HOMOG==-9999,TMIN_INFILL,TMIN_HOMOG))
+     dfout$tmax=with(df,ifelse(TMAX_HOMOG==-9999,TMAX_INFILL,TMAX_HOMOG))    
+     return(dfout)
+})
+twx.snotel=rbind(twx.snotel,stadf)
+
 #calculate tavg
 twx.snotel=mutate(twx.snotel,
                tavg=colMeans(t(matrix(c(tmin,tmax),ncol=2))))
 #calculate degdays from tavg
 twx.snotel$degday=twx.snotel[,'tavg']
-twx.snotel$degday=ifelse(twx.snotel$degday<0,0,twx.snotel$degday)
+#twx.snotel$degday=ifelse(twx.snotel$degday<0,0,twx.snotel$degday)
 #calc water year
 twx.snotel$wyr=water_yr(twx.snotel$date)
 #calc cumulative degday by water year and station
@@ -66,5 +81,7 @@ twx.snotel=ddply(twx.snotel,.(Station_ID,wyr),function(x){
      mutate(x,
             cumdegday=cumsum(degday))
 })
+twx.snotel$cumdegday=ifelse(twx.snotel$cumdegday<0,0,twx.snotel$cumdegday)
+
 #write for later use.
 write.table(twx.snotel,file='data/topowx-stationdata/twx.cumdegday.txt',sep='\t',row.names=F,quote=F)

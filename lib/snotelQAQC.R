@@ -40,7 +40,8 @@ snotelQAQC=function(snotelrec,precipmeth){
           dFqc1$version='qc1'
           #write new record to file
           dirname=paste0('data/snotelQAQC')
-          fn=file.path(dirname,'qc',paste0(unique(dFqc1$Station_ID),'-qc1_precipmeth',precipmeth,'.txt'))
+          daterange=paste(dFqc1$snoteldate[1],dFqc1$snoteldate[nrow(dFqc1)],sep='-')
+          fn=file.path(dirname,'qc',paste0(unique(dFqc1$Station_ID),'-qc1_precipmeth',precipmeth,'_',daterange,'.txt'))
           write.table(dFqc1[,c('snoteldate','swe','apcp','tmax','tmin','tavg','precip')],fn,sep='\t',row.names=F,quote=F)
           
           ##CAVEAT: precip and aprecip are used to fill SWE. precip_adjust then increases apcp and precip based on max(dswe,precip). since there are no NA's in swe, rerunning fixSWE on dFqc1 wouldn't do anything. rerun fixSWE with raw swe but updated apcp and precip? -- there are so few days where SWE =NA. plus with precipmeth=1 swe needs to increase for precip to be adjusted so it might not change swe much to rerun fixSWE...? maybe more with precipmeth=2
@@ -63,7 +64,7 @@ snotelQAQC=function(snotelrec,precipmeth){
                geom_line(aes(x=date,y=value,colour=version,linetype=variable),alpha=0.5)+
                labs(title=paste(unique(dF$Station_ID),'\nprecip method',precipmeth))+
                theme_minimal()
-          ggsave(plot=g,filename=paste0(dirname,'/plots/snotelrec_',unique(dF$Station_ID),'_precipmeth',precipmeth,'.pdf'),height=3,width=6)
+          ggsave(plot=g,filename=paste0(dirname,'/plots/snotelrec_',unique(dF$Station_ID),'_precipmeth',precipmeth,'_',daterange,'.pdf'),height=3,width=6)
           ## ggplot is giving a warning that 23 rows contain missing values but snotelrec doesn't have any missing values so something in dFplot after melt?
           return(dFqc2[,-ncol(dFqc2)])
      })

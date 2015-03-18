@@ -26,3 +26,5 @@ originaldata$mnth=swedata$mnth
 
 return(swedata)
 }
+
+# d_ply(temp2,.(date),function(dF){ if(nrow(dF)>237) {print(unique(dF$date)); print(nrow(dF))}})

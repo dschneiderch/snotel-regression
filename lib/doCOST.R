@@ -21,8 +21,8 @@ doCOST=function(mdlpreds,cost,recon.version){
                     phvrcn.cor=costfun(snotel,phvrcn.pred),
                     phvfull.cor=costfun(snotel,phv.fullpred),
                     phvrcnfull.cor=costfun(snotel,phvrcn.fullpred),
-                    recon.cor=costfun(snotel,recon),
-                    reconfull.cor=costfun(snotel,recon.fullpred))
+                    reconrt.cor=costfun(snotel,reconrt),
+                    reconrtfull.cor=costfun(snotel,reconrt.fullpred))
      }
      )
      daystats$date=as.POSIXct(strptime(daystats$yrdoy,'%Y%j'))
@@ -31,24 +31,24 @@ doCOST=function(mdlpreds,cost,recon.version){
      whichrdate=ddply(daystats,.(date),summarise,
                     yr=strftime(unique(date),'%Y'),
                     phvrcn_recondate=recondate[which.max(phvrcnfull.cor)],
-                    recon_costdate=recondate[which.max(reconfull.cor)],
+                    recon_costdate=recondate[which.max(reconrtfull.cor)],
                     skill_phv=max(phv.cor),
                     skill_phvrcn=max(phvrcn.cor),
-                    skill_recon=max(recon.cor),
+                    skill_recon=max(reconrt.cor),
                     skill_phvfull=max(phvfull.cor),
-                    skill_phvrcnful=max(phvrcnfull.cor),
-                    skill_reconfull=max(reconfull.cor))
+                    skill_phvrcnfull=max(phvrcnfull.cor),
+                    skill_reconfull=max(reconrtfull.cor))
      } else if(flag=='min') {
           whichrdate=ddply(daystats,.(date),summarise,
                          yr=strftime(unique(date),'%Y'),
                          phvrcn_recondate=recondate[which.min(phvrcnfull.cor)],
-                         recon_costdate=recondate[which.min(reconfull.cor)],
+                         recon_costdate=recondate[which.min(reconrtfull.cor)],
                          skill_phv=min(phv.cor),
                          skill_phvrcn=min(phvrcn.cor),
-                         skill_recon=min(recon.cor),
+                         skill_recon=min(reconrt.cor),
                          skill_phvfull=min(phvfull.cor),
                          skill_phvrcnfull=min(phvrcnfull.cor),
-                         skill_reconfull=min(reconfull.cor))
+                         skill_reconfull=min(reconrtfull.cor))
      }
      return(whichrdate)
 }

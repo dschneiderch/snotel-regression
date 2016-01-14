@@ -10,3 +10,4 @@ graphs/
 profiling/
 tests/
 reports/
+.DS_Store

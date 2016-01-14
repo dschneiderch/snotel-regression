@@ -3,7 +3,9 @@ doOptRecon <- function(doydF,static_mdl,style){
 
 if(style=='real-time'){
      foptLUT=optLUT[optLUT$yr<doydF$yr,]
-} else { foptLUT=optLUT }
+} else { 
+     foptLUT=optLUT 
+}
 
      cumdata=optdata[optdata$date %in% unique(doydF$date),]
 

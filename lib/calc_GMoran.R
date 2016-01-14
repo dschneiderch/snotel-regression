@@ -1,5 +1,5 @@
 ## TODO plot both blended and unblended estimates, create 1 dataframe to facet.
-calc_GMoran=function(dF,snotellocs.usgs,recon.version,covrange){
+calc_GMoran=function(dF,snotellocs.usgs,covrange){
 
 xrdate=unique(dF$recondate)
 dt=unique(dF$date)
@@ -7,7 +7,10 @@ print(dt)
 
 if( length(unique(dF$snotel))>1 ){
      snotellocs.df=as.data.frame(snotellocs.usgs)
-     maxdist=as.numeric(gsub('km','',covrange))*1000
+     if(grepl('km',covrange)) {
+          maxdist=as.numeric(gsub('km','',covrange))*1000
+     } else maxdist=300000
+     
      kd=dnearneigh(snotellocs.usgs,d1=0,d2=maxdist,row.names=snotellocs.usgs$Station_ID)#d2 should equal abut 200km fro all stations to have some neighbors. min 8 with 200km.
      #summary(kd)
     # plot(kd,coords=coordinates(snotellocs.usgs))#
@@ -23,6 +26,7 @@ if( length(unique(dF$snotel))>1 ){
      idw=lapply(dist,function(x) 1/(x^p))
      kd.idw=nb2listw(kd,glist=idw,style='B')
 #      kd.binary_weight=nb2listw(kd200,style='W')#this just weights the nearest neighbors for each station equally. W is row standardized.
+     coordnames(snotellocs.usgs)=c('x','y')
      locsmat=as.matrix(as.data.frame(snotellocs.usgs)[,c('x','y')])    
      exdat=data.frame(locsmat,dF)
      localmoran4plot=function(localm){
@@ -32,8 +36,8 @@ if( length(unique(dF$snotel))>1 ){
                     shapecut=as.factor(sign(Ii)))
           #dF$Pcut=as.factor(dF$Pcut,levels=rev(levels(dF$Pcut)))
      }
-localm.phv=localmoran4plot(localmoran(exdat$phvresid,kd.idw))
-localm.phvrcn=localmoran4plot(localmoran(exdat$phvrcnresid,kd.idw))
+# localm.phv=localmoran4plot(localmoran(exdat$phvresid,kd.idw))
+# localm.phvrcn=localmoran4plot(localmoran(exdat$phvrcnresid,kd.idw))
 
 mt1=moran.test(exdat$phvresid,listw=kd.idw)
 mt2=moran.test(exdat$phvrcnresid,listw=kd.idw)

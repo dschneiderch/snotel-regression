@@ -1,11 +1,12 @@
 doCOST=function(mdlpreds,cost,recon.version){
-     #pass in predictions and a cost function as character  (cor, rmse etc)     
-     
+     #pass in predictions and a cost function as character  (cor, rmse etc)
+
      if(cost=='cor') { #statistics to maximize
           costfun<-function(y,yhat) cor(y,yhat)
           flag='max'
-     } else if(cost=='r2') {     
-          costfun<-function(y,yhat) 1-sum((y-yhat)^2)/sum((y-mean(y,na.rm=T))^2)
+     } else if(cost=='r2') {
+#           costfun<-function(y,yhat) 1-sum((y-yhat)^2)/sum((y-mean(y,na.rm=T))^2)
+          costfun<-function(y,yhat) cor(y,yhat)^2
           flag='max'
      } else if(cost=='mae') { #statistics to minimize
           costfun<-function(y, yhat) mean(abs(yhat-y),na.rm=T)
@@ -14,9 +15,10 @@ doCOST=function(mdlpreds,cost,recon.version){
           costfun<-function(y,yhat) sqrt(mean((yhat-y)^2,na.rm=T))
           flag='min'
      }
-     
+
+
      daystats=ddply(mdlpreds,.(yrdoy,recondate),function(x){
-          summarise(x, 
+          summarise(x,
                     phv.cor=costfun(snotel,phv.pred),
                     phvrcn.cor=costfun(snotel,phvrcn.pred),
                     phvfull.cor=costfun(snotel,phv.fullpred),
@@ -26,7 +28,7 @@ doCOST=function(mdlpreds,cost,recon.version){
      }
      )
      daystats$date=as.POSIXct(strptime(daystats$yrdoy,'%Y%j'))
-     
+
      if(flag=='max'){
      whichrdate=ddply(daystats,.(date),summarise,
                     yr=strftime(unique(date),'%Y'),

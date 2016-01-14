@@ -1,13 +1,17 @@
 {
-	
 	"folders":
 	[
 		{
-			"follow_symlinks": true,
 			"path": "."
+		},
+		{
+			"path": "/Volumes/shareProjects/WSC/data/swe_regression"
 		}
-	]
-
-	
-
+	],
+	"settings":
+	{
+		"FuzzyFilePath":
+		{
+		}
+	}
 }

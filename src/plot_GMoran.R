@@ -3,16 +3,16 @@ setwd('~/GoogleDrive/snotel-regression_project')
 load.project()
 library(dplyr)
 
-cost='rmse'
+cost='r2'
 costshort='globalI'
 style='real-time'#reanalysis'
-recon.version='v3.2'
-covrange='300km'
+recon.version='v3.1'
+covrange='idp1'
 
 ## **
 # you'll need to run src/check_spatialcorrelation.R first
 ## **
-skill=read.table(paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/',style,'_moran_info_for_recondate_selection_',cost,'.txt'),sep='\t',header=T)
+skill=read.table(paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',style,'_moran_info_for_recondate_selection_',cost,'-',fscaMatch,'.txt'),sep='\t',header=T)
 skill$date=as.POSIXct(skill$date,tz='MST')
 skill$yr=strftime(skill$date,'%Y')
 skill$recondate=as.POSIXct(skill$recondate,tz='MST')

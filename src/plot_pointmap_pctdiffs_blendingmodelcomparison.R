@@ -6,12 +6,14 @@ library(dplyr)
 recon.version='v3.2'
 cost='r2'
 style='real-time'
-swediffmap=point_plot_setup(recon.version,style,cost)
+covrange='300km'
+swediffmap=point_plot_setup(recon.version,style,cost,covrange)
 
 #### Combined mapping of pct diffs- rows = modeltype, columns 4 years.
 facet1_names=list(
     'swediffpct.phv'='Regression w/o RCN',
-    'swediffpct.phvrcn'='Regression w/ RCN')
+    'swediffpct.phvrcn'='Regression w/ RCN',
+    'regressiondiff'='Difference')
 facet2_names=list(
   'unblended'='Unblended',
   'blended'='Blended',
@@ -33,31 +35,35 @@ plot_labeller <- function(variable,value){
     }
  }
 
-
+yer=2001
 for(yer in 2001:2012){
   print(yer)
 monthday= 'Apr01'
 brkpoints=9#odd number
 outlier=20#interval = outlier/floor(brkpoints/2)
-swediffmap$phvblenddiff=(abs(swediffmap$swediffpct.phv)-abs(swediffmap$swediffpct.phvfull))
-swediffmap$phvrcnblenddiff=(abs(swediffmap$swediffpct.phvrcn)-abs(swediffmap$swediffpct.phvrcnfull))
+swediffmap$phvblendndiff=(abs(swediffmap$swediffpct.phv)-abs(swediffmap$swediffpct.phvfull))
+swediffmap$phvrcnblendndiff=(abs(swediffmap$swediffpct.phvrcn)-abs(swediffmap$swediffpct.phvrcnfull))
+swediffmap$noblendrcndiff=(abs(swediffmap$swediffpct.phv)-abs(swediffmap$swediffpct.phvrcn))
+swediffmap$blendrcndiff=(abs(swediffmap$swediffpct.phvfull)-abs(swediffmap$swediffpct.phvrcnfull))
 
 swediffmapplot=subset(swediffmap,mnthdy==monthday & yr==yer)# | yr==2011))
-swediffmapplot=melt(swediffmapplot[,c('yr','lat','long','phvblenddiff','phvrcnblenddiff','swediffpct.phv','swediffpct.phvrcn','swediffpct.phvfull','swediffpct.phvrcnfull')],id=c('yr','lat','long'))
-swediffmapplot$blended='unblended'
-fullind=grep('full',as.character(swediffmapplot$variable))
-diffind=grep('blenddiff',as.character(swediffmapplot$variable))
-swediffmapplot$blended[fullind]='blended'
-swediffmapplot$blended[diffind]='blenddiff'
-swediffmapplot$blended=factor(swediffmapplot$blended,levels=c('unblended','blended','blenddiff'))
+swediffmapplot=melt(swediffmapplot[,c('yr','lat','long','phvblendndiff','phvrcnblendndiff','noblendrcndiff','blendrcndiff','swediffpct.phv','swediffpct.phvrcn','swediffpct.phvfull','swediffpct.phvrcnfull')],id=c('yr','lat','long'))
 
+swediffmapplot$blended='unblended'
+fullind=c(grep('full',as.character(swediffmapplot$variable)),grep('blendrcndiff',as.character(swediffmapplot$variable)))
+diffind=grep('ndiff',as.character(swediffmapplot$variable))
+swediffmapplot$blended[fullind]='blended'
+swediffmapplot$blended[diffind]='diff'
+swediffmapplot$blended=factor(swediffmapplot$blended,levels=c('unblended','blended','diff'))
+
+swediffmapplot$variable=factor(swediffmapplot$variable,levels=c('swediffpct.phv','swediffpct.phvrcn','regressiondiff'))
 swediffmapplot$variable[swediffmapplot$variable=='swediffpct.phvfull']='swediffpct.phv'
 swediffmapplot$variable[swediffmapplot$variable=='swediffpct.phvrcnfull']='swediffpct.phvrcn'
-swediffmapplot$variable[swediffmapplot$variable=='phvblenddiff']='swediffpct.phv'
-swediffmapplot$variable[swediffmapplot$variable=='phvrcnblenddiff']='swediffpct.phvrcn'
-swediffmapplot$variable=factor(swediffmapplot$variable,levels=c('swediffpct.phv','swediffpct.phvrcn'))
+swediffmapplot$variable[swediffmapplot$variable=='phvblendndiff']='swediffpct.phv'
+swediffmapplot$variable[swediffmapplot$variable=='phvrcnblendndiff']='swediffpct.phvrcn'
+swediffmapplot$variable[swediffmapplot$variable=='noblendrcndiff']='regressiondiff'
+swediffmapplot$variable[swediffmapplot$variable=='blendrcndiff']='regressiondiff'
 #
-
 swediffmapplot$value=swediffmapplot$value*100
 swediffmapplot$value[swediffmapplot$value > outlier]=outlier-1
 swediffmapplot$value[swediffmapplot$value < -outlier | is.na(swediffmapplot$value)]=-outlier+1
@@ -78,8 +84,8 @@ myplot=function(yr){
     geom_raster(data=ucorelief.df,aes(x=long,y=lat,alpha=ter))+
     scale_alpha_continuous(range=c(1,0.5))+
     geom_path(data=states,aes(x=long,y=lat,group=group),color='grey10')+
-    geom_point(data=subset(swediffmapplot,value < 0),aes(x=long,y=lat,color=cuts,shape=cuts),alpha=0.75,size=4)+
-    geom_point(data=subset(swediffmapplot,value >= 0),aes(x=long,y=lat,color=cuts,shape=cuts),alpha=0.75,size=4)+
+    geom_point(data=subset(swediffmapplot,value < 0),aes(x=long,y=lat,color=cuts,shape=cuts),alpha=0.75,size=2)+
+    geom_point(data=subset(swediffmapplot,value >= 0),aes(x=long,y=lat,color=cuts,shape=cuts),alpha=0.75,size=2)+
     scale_color_manual(values = rev(colorRampPalette(brewer.pal(11,"RdYlBu"))(length(levels(swediffmapplot$cuts)))),drop=F,labels=legendlabels)+
     scale_shape_manual(values=rev(c(rep(16,length(levels(swediffmapplot$cuts))/2),rep(17,length(levels(swediffmapplot$cuts))/2))),drop=F,labels=legendlabels)+
     scale_size_manual(values=c(seq(szmax,szmin,-szstep),seq(szmin,szmax,szstep)),drop=F,labels=legendlabels)+
@@ -103,7 +109,7 @@ myplot=function(yr){
     facet_grid(variable~blended,labeller=plot_labeller)
 }
 mp=myplot(yer)
-#show(mp)
-ggsave(plot=mp,filename=paste0('graphs/rswe_',recon.version,'/blendingmodelcomparison.5percent.pctdiff.',yer,'.png'),dpi=300,width=11,height=10)
+show(mp)
+ggsave(plot=mp,filename=paste0('graphs/rswe_',recon.version,'/blendingmodelcomparison.5percent.pctdiff.',yer,'.',covrange,'.',cost,'.png'),dpi=300,width=11,height=10)
 }
 

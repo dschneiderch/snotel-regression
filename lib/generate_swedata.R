@@ -1,9 +1,9 @@
 generate_swedata=function(snotelrecon){
           
 # scale the x variables -----------------------------------------
-phv_scatt=scale(phvrec[,-ncol(phvrec)])
-phvrec.sc=data.frame(phv_scatt,Station_ID=phvrec$Station_ID)
-phvrec.sc=phvrec.sc[order(phvrec$Station_ID),]
+# phv_scatt=scale(phvrec[,-ncol(phvrec)])
+# phvrec.sc=data.frame(phv_scatt,Station_ID=phvrec$Station_ID)
+# phvrec.sc=phvrec.sc[order(phvrec$Station_ID),]
 
 # create temporally continuous snotelrecon record ----------------
 temp1=snotelrec[,c('swe','date','Station_ID')]
@@ -17,14 +17,14 @@ swedata$yr=as.numeric(strftime(swedata$date,'%Y'))
 originaldata=merge(swedata,phvrec,by='Station_ID',all=T)
 colnames(originaldata) <- gsub(pattern='swe',replacement='snotel',x=colnames(originaldata))
 #
-swedata=merge(swedata,phvrec.sc,by='Station_ID',all=T)
-colnames(swedata) <- gsub(pattern='swe',replacement='snotel',x=colnames(swedata))
+# swedata=merge(swedata,phvrec.sc,by='Station_ID',all=T)
+# colnames(swedata) <- gsub(pattern='swe',replacement='snotel',x=colnames(swedata))
 #
 #difference between swedata and original data is phvrec was scaled in swedata
-swedata$mnth=factor(strftime(swedata$date,'%b'),levels=unique(strftime(swedata$date[order(swedata$date)],'%b')))
-originaldata$mnth=swedata$mnth
+# swedata$mnth=factor(strftime(swedata$date,'%b'),levels=unique(strftime(swedata$date[order(swedata$date)],'%b')))
+originaldata$mnth=factor(strftime(originaldata$date,'%b'),levels=unique(strftime(originaldata$date[order(originaldata$date)],'%b')))
 
-return(swedata)
+return(originaldata)
 }
 
 # d_ply(temp2,.(date),function(dF){ if(nrow(dF)>237) {print(unique(dF$date)); print(nrow(dF))}})

@@ -1,4 +1,4 @@
-point_plot_setup=function(recon.version,style,cost,covrange){
+point_plot_setup=function(recon.version,style,cost,covrange,scalesnotel, fscaMatch,dateflag){
 # # Map domain and snotel stations
 # #*** For Upper CO River Basin domain
 upleft=c(43.75,-112.25)
@@ -19,23 +19,48 @@ ucorelief.df=data.frame(rasterToPoints(ucorelief.agg))
 names(ucorelief.df)=c('long','lat','ter')
 assign('ucorelief.df',ucorelief.df,envir=.GlobalEnv)
 
-snotelxval=read.table(paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/fullpreds/xval/',style,'_','snotel_xval_bestpreds_',cost,'.txt'),header=T)
+fns=list.files(path=paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/fullpreds/xval/'),pattern=glob2rx(paste0(style,'*',fscaMatch,'_',cost,'*')),full.names=T)
+snotelxval=ldply(fns,read.table,header=T)
 snotelxval=snotelxval[!is.na(snotelxval$Station_ID),]
 snotelxval$date=as.POSIXct(snotelxval$date,tz='MST')
 snotelxval$recondate=as.POSIXct(snotelxval$recondate,tz='MST')
 snotelxval=arrange(snotelxval,date,Station_ID)
 
+coordnames(snotellocs)=c('x','y')
 snotellocs.df=as.data.frame(snotellocs)[snotellocs$Station_ID %in% unique(snotelxval$Station_ID),]
 
 snotelxval=ddply(snotelxval,.(Station_ID),function(dF){ 
 	sid=unique(dF$Station_ID)
 	dF$lat=snotellocs.df[snotellocs.df$Station_ID==sid,'y']
 	dF$long=snotellocs.df[snotellocs.df$Station_ID==sid,'x']
+	dF$elev=snotellocs.df[snotellocs.df$Station_ID==sid,'Elevation_m']
 	return(dF)
 })
 
+stationswe=readRDS('data/station_swe_scaled.rds')
+snotelxval[snotelxval$Station_ID=='05G04S' & snotelxval$date==as.POSIXct('2001-02-05',tz='MST'),]
+str(stationswe)
+str(snotelxval)
+snotelxval2=merge(snotelxval[,-4],stationswe,by=c('Station_ID','date'))
+snotelxval2[snotelxval2$swe==0,'swe']=0.001
+snotelxval2[snotelxval2$snotel==0,'snotel']=0.001
 
-swediffmap=mutate(snotelxval,
+if(scalesnotel=='scale') {
+swediffmap=mutate(snotelxval2,
+	swediff.phv=phv.pred-swe,
+	swediff.phvrcn=phvrcn.pred-swe,
+	swediff.reconrt=reconrt-swe,
+	swediff.phvfull=phv.fullpred-swe,
+	swediff.phvrcnfull=phvrcn.fullpred-swe,
+	swediff.reconrtfull=reconrt.fullpred-swe,
+	swediffpct.phv=swediff.phv/swe,
+	swediffpct.phvrcn=swediff.phvrcn/swe,
+	swediffpct.reconrt=swediff.reconrt/swe,
+	swediffpct.phvfull=swediff.phvfull/swe,
+	swediffpct.phvrcnfull=swediff.phvrcnfull/swe,
+	swediffpct.reconrtfull=swediff.reconrtfull/swe)
+} else {
+swediffmap=mutate(snotelxval2,
 	swediff.phv=phv.pred-snotel,
 	swediff.phvrcn=phvrcn.pred-snotel,
 	swediff.reconrt=reconrt-snotel,
@@ -47,7 +72,8 @@ swediffmap=mutate(snotelxval,
 	swediffpct.reconrt=swediff.reconrt/snotel,
 	swediffpct.phvfull=swediff.phvfull/snotel,
 	swediffpct.phvrcnfull=swediff.phvrcnfull/snotel,
-	swediffpct.reconrtfull=swediff.reconrtfull/snotel)
+	swediffpct.reconrtfull=swediff.reconrtfull/snotel)	
+}
 swediffmap$yr=strftime(swediffmap$date,'%Y')
 swediffmap$mnth=strftime(swediffmap$date,'%b')
 swediffmap$mnthdy=strftime(swediffmap$date,'%b%d')

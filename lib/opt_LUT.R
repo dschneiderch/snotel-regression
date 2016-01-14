@@ -23,6 +23,7 @@ optlist=dlply(optLUT,.(Station_ID),function(dF){
 optLUT=ldply(optlist,'[[',1)
 optLUT$mth=as.numeric(strftime(optLUT$date,'%m'))
 optLUT$yr=as.numeric(strftime(optLUT$date,'%Y'))
+optLUT=optLUT[optLUT$Station_ID %in% unique(swedata$Station_ID),]
 # optLUT=optLUT[optLUT$mth==3 | optLUT$mth==4 | optLUT$mth==5 | optLUT$mth==6,]#this needs to correspond to recon dates
 #
 stascale=ldply(optlist,'[[',2)

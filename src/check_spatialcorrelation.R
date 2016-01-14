@@ -1,29 +1,32 @@
 library('ProjectTemplate')
-setwd('~/GoogleDrive/snotel-regression_project')
+setwd('~/Documents/snotel-regression_project')
 #setwd('~/Documents/snotel-regression_project')
 library(doMC)
 load.project()
 
 # select recon version ----------------------------------------------------
-recon.version='v3.2'
+recon.version='v3.1'
 
 # run model -------------------
 cost='r2'#cor, r2, mae, rmse
 style='real-time'#real-time'#'real-time','reanalysis'
 spatialblend='blend'#flag to do geostatistical blending or not (prediction stage only; always does in the CV stage). blending takes long time for the entire domain..
 output='points'#points' #'surface' #just predict at snotel pixels #for 'points' spatialblend must also be 'blend'
-covrange='300km'
+covrange='idp1'
+scalesnotel='scale'
+fscaMatch='wofsca'
 
-registerDoMC(3)
 
-fullpreds=read.table(paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/','fullpreds/xval/',style,'_snotel_xval_bestpreds_',cost,'.txt'),header=T)
+fns=list.files(pattern=glob2rx(paste0('*',fscaMatch,'_',cost,'*')),path=paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/fullpreds/xval/'),full.names=T)
+fullpreds=ldply(fns,read.table,header=T)
 #
 snotellocs=snotellocs[snotellocs$Station_ID %in% fullpreds$Station_ID,]#this is incase we do another year such as fassnacht years. keep in mind that only years availble 2000-2012 will be included regardless if there wre others.
 snotellocs.usgs=spTransform(snotellocs,CRS('+init=epsg:5070'))
 
 ## --- calc Global Moran on residuals
-moran.df=ddply(fullpreds,.(yrdoy),calc_GMoran,snotellocs.usgs,recon.version,covrange,.parallel=3)
-write.table(moran.df,paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/',style,'_moran_info_for_recondate_selection_',cost,'.txt'),sep='\t',row.names=F,quote=F)     
+registerDoMC(3)
+moran.df=ddply(fullpreds,.(yrdoy),calc_GMoran,snotellocs.usgs,covrange,.parallel=T)
+write.table(moran.df,paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',style,'_moran_info_for_recondate_selection_',cost,'-',fscaMatch,'.txt'),sep='\t',row.names=F,quote=F)     
 
 
 ## ---- calc Local Moran of SWE obs vs SWE model and compare

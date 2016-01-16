@@ -3,6 +3,7 @@ library('ProjectTemplate')
 #setwd('~/Documents/snotel-regression_project')
 load.project()
 
+args=c(2001,'scale','fsca','r2')
 args=commandArgs(trailing=T)
 mdlyr=args[1]
 scalesnotel=args[2]
@@ -28,7 +29,6 @@ snotelrecon=snotelrecon[snotelrecon$Station_ID %in% unique(swedata$Station_ID),]
 
 optflag='noopt'
 if(optflag=='opt'){
-
 # create opt lookup table
 optlist=opt_LUT()
 optLUT=optlist[[1]]
@@ -53,6 +53,7 @@ optdata=ddply(snotelrec,.(wy,Station_ID),function(dF){
   return(data.frame(date,yr,cumdegday,apcp,doy))
 })
 }
+
 # if(nzchar(Sys.getenv('PBS_NODEFILE'))) {
 # # setup parallel processing -----------
 #  getnodes <- function() {
@@ -110,7 +111,7 @@ doidata=subset(doidata,yr==mdlyr)
 # select recon dates to evaluate model with
 #recondata is used to iterate through recondates.
 #these dates can be different than olddata/mdldata if wanted but must include at least 1 date before each mdl date if used in real-time mode
-recondata=subset(mdldata, (dy==1 | dy==15) )
+recondata=subset(mdldata, (dy==1 | dy==15))
 
 # run model -------------------
 # cost='r2'#cor, r2, mae, rmse
@@ -119,7 +120,7 @@ spatialblend='blend'#flag to do geostatistical blending or not (prediction stage
 output='surface'#points' #'surface' #just predict at snotel pixels #for 'points' spatialblend must also be 'blend'
 covrange='idp1'#
 fordensource='umd_forden'#'nlcd_forden'
-predictor='fsca'#'phv'
+predictor='fsca'#'rcn'
 # scalesnotel='scale'
 # fscaMatch='wofsca'
 
@@ -132,8 +133,12 @@ print(fscaMatch)
 print(scalesnotel)
 print(fordensource)
 
+
 configpath=paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/')
-system(paste0('mkdir -p ', configpath,'fullpreds/xval'))
+if(predictor=='fsca') {
+     system(paste0('mkdir -p ', configpath,'fscapredict'))
+     system(paste0('mkdir -p ', configpath,'fullpreds/xval/fscapredict'))
+}
 
 
 if(style=='real-time'){
@@ -159,8 +164,13 @@ which_recon_date=cleandF(ldply(doylist,'[[',1))
 xvalpreds=ldply(doylist,'[[',2,.inform=F)
 # optweights=ldply(doylist,'[[',3)
 # #
-write.table(which_recon_date,paste0(configpath,style,'_recondate_selection_',fscaMatch,'_',cost,'-',mdlyr,'.txt'),sep='\t',row.names=F,quote=F)
-write.table(xvalpreds,paste0(configpath,'fullpreds/xval/',style,'_snotel_xval_bestpreds_',fscaMatch,'_',cost,'-',mdlyr,'.txt'),sep='\t',row.names=F,quote=F)
+if(predictor=='fsca'){
+     write.table(which_recon_date,paste0(configpath,'fscapredict/',style,'_recondate_selection_',fscaMatch,'_',cost,'-',mdlyr,'.txt'),sep='\t',row.names=F,quote=F)
+     write.table(xvalpreds,paste0(configpath,'fullpreds/xval/fscapredict/',style,'_snotel_xval_bestpreds_',fscaMatch,'_',cost,'-',mdlyr,'.txt'),sep='\t',row.names=F,quote=F)
+} else {
+     write.table(which_recon_date,paste0(configpath,style,'_recondate_selection_',fscaMatch,'_',cost,'-',mdlyr,'.txt'),sep='\t',row.names=F,quote=F)
+     write.table(xvalpreds,paste0(configpath,'fullpreds/xval/',style,'_snotel_xval_bestpreds_',fscaMatch,'_',cost,'-',mdlyr,'.txt'),sep='\t',row.names=F,quote=F)
+}
 # write.table(optweights,paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',style,'_optmodel_',cost,'.txt'),sep='\t',row.names=F,quote=F)
 # #
 

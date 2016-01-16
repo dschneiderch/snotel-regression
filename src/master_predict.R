@@ -7,12 +7,13 @@ load.project()
 
 ## model options
 #cost='r2'#cor, r2, mae, rmse
-style='reanalysis'#real-time'#'real-time','reanalysis'
+style='real-time'#real-time'#'real-time','reanalysis'
 spatialblend='blend'#flag to do geostatistical blending or not (prediction stage only; always does in the CV stage). blending takes long time for the entire domain..
 output='surface'#points' #'surface' #just predict at snotel pixels #for 'points' spatialblend must also be 'blend'
 covrange='idp1'
 fordensource='umd_forden'#'nlcd_forden'
 dateflag='surveyvalidation'##
+predictor='fsca'#'rcn' ## only use with fscaMatch='fsca'
 ## 'surveyvalidation' simulate survey dates and drops the station the survey was around
 ## 'B2' will simulate survey dates without dropping sites. #use this if doing survey validation simulations. will drop station of survey
 ## 'B' will simulate all selected dates from modscag plus weekly mar 1 to jun 22
@@ -24,10 +25,10 @@ dateflag='surveyvalidation'##
 
 args=commandArgs(trailing=T)
 if(length(args)<4 & length(args)!=0) {
-print('not enough arguments')
-stop()
+     print('not enough arguments')
+     stop()
 }
-if(length(args)==0) args=c('2001','scale','wofsca','r2')
+if(length(args)==0) args=c('2001','scale','fsca','r2')
 mdlyr=args[1]
 scalesnotel=args[2]
 fscaMatch=args[3]
@@ -86,8 +87,8 @@ varind=which(names(mdldata) %in% names(ucophv))
 avg=attr(ucophvsc,'scaled:center')
 std=attr(ucophvsc,'scaled:scale')
 for(i in varind){
-	ucoind=which(names(avg) %in% names(mdldata)[i])
-	mdldata[,i]=(mdldata[,i]-avg[ucoind])/std[ucoind]
+     ucoind=which(names(avg) %in% names(mdldata)[i])
+     mdldata[,i]=(mdldata[,i]-avg[ucoind])/std[ucoind]
 }
 
 #define domain for prediction -------
@@ -132,16 +133,15 @@ print(scalesnotel)
 print(fscaMatch)
 print(fordensource)
 
-which_recon_date=read.table(paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/',style,'_recondate_selection_',fscaMatch,'_',cost,'-',mdlyr,'.txt'),sep='\t',header=T,stringsAsFactors=F)
+fscapredictflag='fscapredict'
+
+which_recon_date=read.table(paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/',fscapredictflag,'/',style,'_recondate_selection_',fscaMatch,'_',cost,'-',mdlyr,'.txt'),sep='\t',header=T,stringsAsFactors=F)
 which_recon_date$date=as.POSIXct(strptime(which_recon_date$date,'%Y-%m-%d',tz='MST'))
 which_recon_date$phvrcn_recondate=as.POSIXct(strptime(which_recon_date$phvrcn_recondate,'%Y-%m-%d',tz='MST'))
 which_recon_date$recon_costdate=as.POSIXct(strptime(which_recon_date$recon_costdate,'%Y-%m-%d',tz='MST'))
 which_recon_date$mth=as.numeric(strftime(which_recon_date$date,'%m'))
 which_recon_date$dy=as.numeric(strftime(which_recon_date$date,'%d'))
-which_recon_date=which_recon_date[!is.na(which_recon_date$phvrcn_recondate),]
 #####
-
-
 
 # which_recon_date=which_recon_date[c(1,2,32,33),]
 #registerDoMC(allocated.cores)
@@ -150,7 +150,7 @@ which_recon_date=which_recon_date[!is.na(which_recon_date$phvrcn_recondate),]
 which_recon_date=subset(which_recon_date,yr==mdlyr)
 #which_recon_date=subset(which_recon_date, (dy==1 & mth==4))
 #str(which_recon_date)
-predict_wrapper(which_recon_date,style,newdata,newdatalocs.usgs,newdatalocs.agg.usgs,spatialblend,scalesnotel,fscaMatch,cost,fordensource,dateflag)
+predict_wrapper(which_recon_date,style,newdata,newdatalocs.usgs,newdatalocs.agg.usgs,spatialblend,scalesnotel,fscaMatch,cost,fordensource,dateflag,predictor)
 
 # wrd=subset(which_recon_date,mth=3)
 # predict_wrapper(wrd,style,newdata,newdatalocs.usgs,newdatalocs.agg.usgs,spatialblend)

@@ -34,11 +34,20 @@ predict_wrapper <- function(rdtsdF,style,newdata,newdatalocs,newdatalocs.agg.usg
      phvrcnfull.fn=file.path(bpth,cost,'netcdf',style,paste0('fullpreds-phv',predictor,'_',yr,'_',spatialblend,'-',fscaMatch,'.nc'))
      if(file.exists(phvrcnfull.fn)) file.remove(phvrcnfull.fn)
      
-     reconrt.fn=file.path(bpth,cost,'netcdf',style,paste0('preds-reconrt_',yr,'_',spatialblend,'-',fscaMatch,'.nc'))
-     if(file.exists(reconrt.fn)) file.remove(reconrt.fn)
+     if(predictor=='fsca'){
+          reconrt.fn=file.path(bpth,cost,'netcdf',style,paste0('preds-fscart_',yr,'_',spatialblend,'-',fscaMatch,'.nc'))
+          if(file.exists(reconrt.fn)) file.remove(reconrt.fn)
+          
+          reconrtfull.fn=file.path(bpth,cost,'netcdf',style,paste0('fullpreds-fscart_',yr,'_',spatialblend,'-',fscaMatch,'.nc'))
+          if(file.exists(reconrtfull.fn)) file.remove(reconrtfull.fn)
+     } else if(predictor=='rcn'){
+          reconrt.fn=file.path(bpth,cost,'netcdf',style,paste0('preds-reconrt_',yr,'_',spatialblend,'-',fscaMatch,'.nc'))
+          if(file.exists(reconrt.fn)) file.remove(reconrt.fn)
+          
+          reconrtfull.fn=file.path(bpth,cost,'netcdf',style,paste0('fullpreds-reconrt_',yr,'_',spatialblend,'-',fscaMatch,'.nc'))
+          if(file.exists(reconrtfull.fn)) file.remove(reconrtfull.fn)
+     }
      
-     reconrtfull.fn=file.path(bpth,cost,'netcdf',style,paste0('fullpreds-reconrt_',yr,'_',spatialblend,'-',fscaMatch,'.nc'))
-     if(file.exists(reconrtfull.fn)) file.remove(reconrtfull.fn)
      
      phv.nc=nc_create(phv.fn,var)
      phvfull.nc=nc_create(phvfull.fn,var)

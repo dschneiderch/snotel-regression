@@ -28,29 +28,29 @@ doCOST=function(mdlpreds,cost,recon.version){
      }
      )
      daystats$date=as.POSIXct(strptime(daystats$yrdoy,'%Y%j'))
-
+     
      if(flag=='max'){
-     whichrdate=ddply(daystats,.(date),summarise,
-                    yr=strftime(unique(date),'%Y'),
-                    phvrcn_recondate=recondate[which.max(phvrcnfull.cor)],
-                    recon_costdate=recondate[which.max(reconrtfull.cor)],
-                    skill_phv=max(phv.cor),
-                    skill_phvrcn=max(phvrcn.cor),
-                    skill_recon=max(reconrt.cor),
-                    skill_phvfull=max(phvfull.cor),
-                    skill_phvrcnfull=max(phvrcnfull.cor),
-                    skill_reconfull=max(reconrtfull.cor))
+          whichrdate=ddply(daystats,.(date),summarise,
+                           yr=strftime(unique(date),'%Y'),
+                           phvrcn_recondate=recondate[which.max(phvrcnfull.cor)],
+                           recon_costdate=recondate[which.max(reconrtfull.cor)],
+                           skill_phv=max(phv.cor),
+                           skill_phvrcn=max(phvrcn.cor),
+                           skill_recon=max(reconrt.cor),
+                           skill_phvfull=max(phvfull.cor),
+                           skill_phvrcnfull=max(phvrcnfull.cor),
+                           skill_reconfull=max(reconrtfull.cor))
      } else if(flag=='min') {
           whichrdate=ddply(daystats,.(date),summarise,
-                         yr=strftime(unique(date),'%Y'),
-                         phvrcn_recondate=recondate[which.min(phvrcnfull.cor)],
-                         recon_costdate=recondate[which.min(reconrtfull.cor)],
-                         skill_phv=min(phv.cor),
-                         skill_phvrcn=min(phvrcn.cor),
-                         skill_recon=min(reconrt.cor),
-                         skill_phvfull=min(phvfull.cor),
-                         skill_phvrcnfull=min(phvrcnfull.cor),
-                         skill_reconfull=min(reconrtfull.cor))
+                           yr=strftime(unique(date),'%Y'),
+                           phvrcn_recondate=recondate[which.min(phvrcnfull.cor)],
+                           recon_costdate=recondate[which.min(reconrtfull.cor)],
+                           skill_phv=min(phv.cor),
+                           skill_phvrcn=min(phvrcn.cor),
+                           skill_recon=min(reconrt.cor),
+                           skill_phvfull=min(phvfull.cor),
+                           skill_phvrcnfull=min(phvrcnfull.cor),
+                           skill_reconfull=min(reconrtfull.cor))
      }
      return(whichrdate)
 }

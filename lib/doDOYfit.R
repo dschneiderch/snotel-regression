@@ -72,7 +72,7 @@ doDOYfit<-function(doydF,cost,style,optflag,scalesnotel,fscaMatch,fordensource,d
           
           #scale snotel
           sca=get_sca(mdate,'fsca')
-          if(scalesnotel=='scale'){
+          if(scalesnotel=='scale' || predictor=='fsca'){
                scaraster=raster(matrix(sca,nrow=2580,byrow=T),xmn=-112.25,xmx=-104.125,ymn=33,ymx=43.75)
                projection(scaraster)='+proj=longlat +datum=WGS84'
                snotelsca=extract(scaraster, snotellocs,cellnum=T)#get values at snotel pixel locations. named sca so we can use its length later
@@ -93,6 +93,8 @@ doDOYfit<-function(doydF,cost,style,optflag,scalesnotel,fscaMatch,fordensource,d
                sca[tmp[ind,'cells']]=0.1#change sca value at locations with snotel to 0.1 where they are 0 when snotel swe > 0
                tmp[ind,'layer']=0.1
                snotelsca=tmp[,'layer']
+          }
+          if(scalesnotel=='scale'){
                doydF$snotel=doydF$snotel*snotelsca
           }
           

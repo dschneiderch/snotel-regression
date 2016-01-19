@@ -13,7 +13,7 @@ output='surface'#points' #'surface' #just predict at snotel pixels #for 'points'
 covrange='idp1'
 fordensource='umd_forden'#'nlcd_forden'
 dateflag='surveyvalidation'##
-predictor='rcn'#'rcn' ## only use with fscaMatch='fsca'
+predictor='fsca'#'rcn' ## only use with fscaMatch='fsca'
 ## 'surveyvalidation' simulate survey dates and drops the station the survey was around
 ## 'B2' will simulate survey dates without dropping sites. #use this if doing survey validation simulations. will drop station of survey
 ## 'B' will simulate all selected dates from modscag plus weekly mar 1 to jun 22
@@ -28,7 +28,7 @@ if(length(args)<4 & length(args)!=0) {
      print('not enough arguments')
      stop()
 }
-if(length(args)==0) args=c('2001','scale','fsca','r2')
+if(length(args)==0) args=c('2009','scale','fsca','r2')
 mdlyr=args[1]
 scalesnotel=args[2]
 fscaMatch=args[3]
@@ -166,4 +166,4 @@ if(exists('cl')) closeCluster(cl)
 #mpi.quit()
 library(pryr)
 print(mem_used())
-quit('no')
+# quit('no')

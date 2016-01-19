@@ -78,15 +78,13 @@ predict_surfaces=function(rdatedF,snotellocs,snotellocs.usgs,newdata,newdatalocs
           if(scalesnotel=='scale'){
                doydF$snotel=doydF$snotel*snotelsca
           }
-          if(predictor=='fsca'){
-               doydF$recon=snotelsca
-          }
           
           if(output!='points'){
                if(predictor!='fsca'){
                     recon=get_sca(rdate,'swe')
                } else {
                     recon=sca
+                    recon[recon>1]=NA
                }
                #		sca=get_sca(mdate,'swe')##better to use for masking because doesn't drop to zero randomly
                #	    sca[tmp[ind,'cells']]=0.1#change sca value at locations with snotel to 0.1 where they are 0 if snotel swe > 0
@@ -102,7 +100,6 @@ predict_surfaces=function(rdatedF,snotellocs,snotellocs.usgs,newdata,newdatalocs
                rstats=list(attr(newdata2$recon,'scaled:center'),attr(newdata2$recon,'scaled:scale'))
                newdata2$recon=as.numeric(newdata2$recon)
                newdata2=newdata2[scaind,]
-               
           } else {
                newdata2=mdldata[mdldata$date==rdatedF$date,]
                newdatalocs.usgs=data.frame(as.data.frame(snotellocs.usgs)[,c('Station_ID','x','y')],recon=newdata2$recon)
@@ -116,7 +113,12 @@ predict_surfaces=function(rdatedF,snotellocs,snotellocs.usgs,newdata,newdatalocs
           # fit models for phv and phvrcn for recondate in rdatedF
           static_mdl=doPHVfit(doydF)
           if(length(static_mdl)>1){
-               dyn_mdl=doPHVRCNfit(rdate,doydF,static_mdl,rstats)[[1]]
+               if(predictor=='fsca'){
+                    dyn_mdl=doPHVRCNfit(rdate,doydF,static_mdl,rstats,snotelsca)[[1]]
+               } else if(predictor=='rcn'){
+                    dyn_mdl=doPHVRCNfit(rdate,doydF,static_mdl,rstats)[[1]]     
+               }
+               
                if(length(dyn_mdl)>1){
                     
                     #predict best models for whole domain
@@ -133,7 +135,7 @@ predict_surfaces=function(rdatedF,snotellocs,snotellocs.usgs,newdata,newdatalocs
                          stop()
                     }
                     
-
+                    
                     #setup dataframes for spatial analysis
                     newdatapreds=data.frame(
                          coordinates(newdatalocs.usgs)[scaind,],

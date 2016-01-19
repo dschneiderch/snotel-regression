@@ -13,7 +13,7 @@ output='surface'#points' #'surface' #just predict at snotel pixels #for 'points'
 covrange='idp1'
 fordensource='umd_forden'#'nlcd_forden'
 dateflag='surveyvalidation'##
-predictor='fsca'#'rcn' ## only use with fscaMatch='fsca'
+predictor='rcn'#'rcn' ## only use with fscaMatch='fsca'
 ## 'surveyvalidation' simulate survey dates and drops the station the survey was around
 ## 'B2' will simulate survey dates without dropping sites. #use this if doing survey validation simulations. will drop station of survey
 ## 'B' will simulate all selected dates from modscag plus weekly mar 1 to jun 22
@@ -133,9 +133,11 @@ print(scalesnotel)
 print(fscaMatch)
 print(fordensource)
 
-fscapredictflag='fscapredict'
-
-which_recon_date=read.table(paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/',fscapredictflag,'/',style,'_recondate_selection_',fscaMatch,'_',cost,'-',mdlyr,'.txt'),sep='\t',header=T,stringsAsFactors=F)
+if(predictor=='fsca'){
+     which_recon_date=read.table(paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/fscapredict/',style,'_recondate_selection_',fscaMatch,'_',cost,'-',mdlyr,'.txt'),sep='\t',header=T,stringsAsFactors=F)
+} else if(predictor=='rcn'){
+     which_recon_date=read.table(paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/',style,'_recondate_selection_',fscaMatch,'_',cost,'-',mdlyr,'.txt'),sep='\t',header=T,stringsAsFactors=F)
+}
 which_recon_date$date=as.POSIXct(strptime(which_recon_date$date,'%Y-%m-%d',tz='MST'))
 which_recon_date$phvrcn_recondate=as.POSIXct(strptime(which_recon_date$phvrcn_recondate,'%Y-%m-%d',tz='MST'))
 which_recon_date$recon_costdate=as.POSIXct(strptime(which_recon_date$recon_costdate,'%Y-%m-%d',tz='MST'))

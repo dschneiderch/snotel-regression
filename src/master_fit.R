@@ -3,8 +3,8 @@ library('ProjectTemplate')
 #setwd('~/Documents/snotel-regression_project')
 load.project()
 
-args=c(2001,'scale','fsca','r2')
 args=commandArgs(trailing=T)
+if(length(args)==0) args=c(2001,'scale','fsca','r2')
 mdlyr=args[1]
 scalesnotel=args[2]
 fscaMatch=args[3]
@@ -120,7 +120,7 @@ spatialblend='blend'#flag to do geostatistical blending or not (prediction stage
 output='surface'#points' #'surface' #just predict at snotel pixels #for 'points' spatialblend must also be 'blend'
 covrange='idp1'#
 fordensource='umd_forden'#'nlcd_forden'
-predictor='fsca'#'rcn'
+predictor='rcn'#'fsca'
 # scalesnotel='scale'
 # fscaMatch='wofsca'
 

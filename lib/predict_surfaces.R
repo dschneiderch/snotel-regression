@@ -14,7 +14,7 @@ predict_surfaces=function(rdatedF,snotellocs,snotellocs.usgs,newdata,newdatalocs
      print(paste0('---- recon date: ',rdate))
      
      # subset mdldata for date
-     rm(doydF)
+     # rm(doydF)
      doydF=mdldata[mdldata$date==mdate,]
      if(dateflag=='surveyvalidation'){
           if(mdate==as.POSIXct('2008-03-16',tz='MST')) doydF=subset(doydF,Station_ID!='07M29S')   #Lizard Head
@@ -78,6 +78,9 @@ predict_surfaces=function(rdatedF,snotellocs,snotellocs.usgs,newdata,newdatalocs
           if(scalesnotel=='scale'){
                doydF$snotel=doydF$snotel*snotelsca
           }
+          if(predictor=='fsca'){
+               doydF$recon=snotelsca
+          }
           
           if(output!='points'){
                if(predictor!='fsca'){
@@ -122,10 +125,13 @@ predict_surfaces=function(rdatedF,snotellocs,snotellocs.usgs,newdata,newdatalocs
                     if(predictor=='fsca') {
                          reconrt.pred=sca[scaind]
                          reconrt=snotelsca
-                    } else {
+                    } else if(predictor=='rcn'){
                          reconrt.pred=get_sca(rdatedF$recon_costdate,'swe')[scaind]
                          reconrt=recondata[recondata$recondate==rdatedF$recon_costdate,'recon']
-                    }                    
+                    } else {
+                         print('predictor must be either "fsca" or "rcn" ')
+                         stop()
+                    }
                     
 
                     #setup dataframes for spatial analysis

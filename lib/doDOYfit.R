@@ -102,7 +102,7 @@ doDOYfit<-function(doydF,cost,style,optflag,scalesnotel,fscaMatch,fordensource,d
           static_mdl<-doPHVfit(doydF)
           if(length(static_mdl)!=1){
                #               print(formula(static_mdl))
-               if(fscaMatch=='fsca' & predictor!='fsca'){
+               if(fscaMatch=='fsca' && predictor=='rcn'){
                     rdate=dofscaMatching(mdate,doydF,sca,style)
                     reconvec=NULL
                } else if(predictor=='fsca') {

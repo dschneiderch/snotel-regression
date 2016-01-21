@@ -23,7 +23,6 @@ doPHVRCNfit <- function(xrdate,doydF,static_mdl,rstats=NULL,reconvec=NULL){
      attr(doydF$recon,'scaled:center')=rstats[[1]]
      attr(doydF$recon,'scaled:scale')=rstats[[2]]
      
-     
      # fix snotel record so there are no zeros
      snotelmdl=doydF$snotel
      snotelmdl=snotelmdl+runif(1,0,0.0001) # doesn't converge usually if there are 0s

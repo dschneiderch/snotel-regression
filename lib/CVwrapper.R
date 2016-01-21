@@ -4,10 +4,14 @@ CVwrapper <- function(xrdate,doydF,static_mdl,reconvec=NULL){
      #    phvrcn.out=withOptions(list(warn=2),doPHVRCNfit(xrdate,doydF,static_mdl))
      if(is.null(reconvec)){
           xrecon=scale(get_sca(xrdate,'swe'))
+          rstats=list(attr(xrecon,'scaled:center'),attr(xrecon,'scaled:scale'))
      } else {
-          xrecon=scale(reconvec)
+          #reconvec already exists
+          sca=get_sca(xrdate,'fsca')
+          sca[sca>1]=NA
+          sca=scale(sca)
+          rstats=list(attr(sca,'scaled:center'),attr(sca,'scaled:scale'))
      }
-     rstats=list(attr(xrecon,'scaled:center'),attr(xrecon,'scaled:scale'))
      phvrcn.out=doPHVRCNfit(xrdate,doydF,static_mdl,rstats,reconvec=reconvec)
      dyn_mdl=phvrcn.out[[1]]
      rcn.sig.phv=phvrcn.out[[2]]

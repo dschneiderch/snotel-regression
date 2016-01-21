@@ -135,7 +135,6 @@ predict_surfaces=function(rdatedF,snotellocs,snotellocs.usgs,newdata,newdatalocs
                          stop()
                     }
                     
-                    
                     #setup dataframes for spatial analysis
                     newdatapreds=data.frame(
                          coordinates(newdatalocs.usgs)[scaind,],

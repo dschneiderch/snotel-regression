@@ -151,7 +151,7 @@ get_modelswe=function(metadata,surf,gridding){
           phvfscaswe=ldply(as.list(1:length(vm)), function(i){
                x=vo[[i]]
                if (!is.null(x)) {
-                    data.frame(cell=i,swe.obs=x,swe.model=vm[[i]],model.type='PHVRCN')
+                    data.frame(cell=i,swe.obs=x,swe.model=vm[[i]],model.type='PHVFSCA')
                } else { NULL}
           })
      } else {

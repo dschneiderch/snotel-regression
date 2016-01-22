@@ -1,5 +1,5 @@
 # setwd('/Volumes/Dominik/Documents/snotel-regression_project')
-setwd('~/Documents/snotel-regression_project')
+# setwd('~/Documents/snotel-regression_project')
 library(raster)
 library(reshape2)
 library(plyr)
@@ -65,7 +65,7 @@ fscaMatch='wofsca'
 scalesnotel='scale'
 blending='unblended'
 style='real-time'
-gridding='_snodasgrid'#_snodasgrid'
+gridding='_modisgrid'#'_snodasgrid'#_snodasgrid'
 postscaled=''#_postscaled'
 
 objcost='rmse'
@@ -75,19 +75,19 @@ for(objcost in c('rmse','pctbias')){
   errtypedF=data_frame()
   print(objcost)
 
-for(cost in 'r2'){
+for(cost in c('r2')){#this refers to the cost function used to optimize phvrcn
   for(blending in c('unblended')){
     for(style in 'real-time'){
-      for(gridding in c('','_snodasgrid')){
+      for(gridding in c('_modisgrid')){
         for(fscaMatch in c('wofsca','fsca')){
           for(scalesnotel in c('noscale','scale')){
-            for(postscaled in c('','_postscaled')){
+            for(postscaled in c('')){
 if(scalesnotel=='scale' & postscaled=='_postscaled') next
 if(dateflag=='surveyvalidation' & gridding=='_snodasgrid') next
 basepath=paste0('data/spatialvalidation/',blending,'/',dateflag,'/',style,'/')
 graphpath=paste0('graphs/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/',fscaMatch,'/',style,'/')
 
-swe=readRDS(file=paste0(basepath,'surveygriddedswe',gridding,'_rswe',recon.version,'_',covrange,'_snotel',scalesnotel,postscaled,'_',cost,'_',fscaMatch,'.rds'))
+swe=readRDS(file=paste0(basepath,'surveygriddedswe',gridding,'_rswe',recon.version,'_',covrange,'_snotel',scalesnotel,postscaled,'_',cost,'_',fscaMatch,'-withphvfsca.rds'))
 swe_all=swe
 if(gridding!='_snodasgrid'){
 cellcount=ddply(swe_all,.(model.type),function(dF) plyr::count(dF$cell))
@@ -104,13 +104,13 @@ cellavg=ddply(swe,.(model.type,date,site,yr,mth,cell),function(dF){
     summarise(dF,
             swe.obs.avg=mean(swe.obs,na.rm=T),#the cell number in swe represents the model cell number so there can be muliple obs cell values (30m)
                                         # na.rm=F will average only for model pixels that are completely covered by observations, otherwise there can be overlap
-              swe.model=unique(swe.model))# there should only be one value for each cell
+            swe.model=unique(swe.model))# there should only be one value for each cell
     })
 
 if(dateflag=='B2'){
-  cellavg=filter(cellavg,model.type=='PHV' | model.type=='PHVRCN' | model.type=='SNODAS')  
+  cellavg=filter(cellavg,model.type=='PHV' || model.type=='PHVRCN' || model.type=='SNODAS')  
 } else if(dateflag=='surveyvalidation') {
-  cellavg=filter(cellavg,model.type=='PHV' | model.type=='PHVRCN')  
+  cellavg=filter(cellavg,model.type=='PHV' || model.type=='PHVRCN' || model.type=='PHVFSCA')  
 }
 
 ## Green Lakes
@@ -123,7 +123,7 @@ err_for=allcost('forested',objcost)
 err_all=rbind(err_glv,err_for) 
 err_all=arrange(err_all,model.type,surveytype,date)
 fn=paste0('boxplot_avg',objcost,'_',blending,'models',postscaled,gridding,'_vs_griddedobs_facet-datesite_',cost,'-rcnselect.txt')
-write.table(err_all,paste0(graphpath,fn),sep='\t',row.names=F,quote=F)
+write.table(err_all,paste0(graphpath,'phvfsca/',fn),sep='\t',row.names=F,quote=F)
 
 erralldF=rbind(erralldF,err_all)
 
@@ -172,20 +172,20 @@ diffdF=erralldF %>%
 diffdF  %>%
   group_by(scalesnotel,postscaled,fscaMatch,blending,style,gridding,phvrcnbest) %>% 
   tally %>%
-  write.table(file=paste0(basepath,'phvrcn_bestfreq_',objcost,gridding,'_',cost,'-rcnselect.txt'),row.names=F,quote=F,sep='\t')
+  write.table(file=paste0(basepath,'phvfsca/phvrcn_bestfreq_',objcost,gridding,'_',cost,'-rcnselect.txt'),row.names=F,quote=F,sep='\t')
 
 diffdF  %>%
   group_by(scalesnotel,postscaled,fscaMatch,blending,style,gridding,phvbest) %>% 
   tally %>%
-  write.table(file=paste0(basepath,'phv_bestfreq_',objcost,gridding,'_',cost,'-rcnselect.txt'),row.names=F,quote=F,sep='\t') 
+  write.table(file=paste0(basepath,'phvfsca/phv_bestfreq_',objcost,gridding,'_',cost,'-rcnselect.txt'),row.names=F,quote=F,sep='\t') 
 }
 
 avgobjerr_all = errdF %>% spread(model.type,err)
 fn=paste0('avg',objcost,'_',blending,'models',gridding,'_vs_griddedobs_facet-datesite_',cost,'-rcnselect.txt')
-write.table(format(avgobjerr_all,digits=2),file.path(basepath,fn),sep='\t',row.names=F,quote=F)
+write.table(format(avgobjerr_all,digits=2),file.path(basepath,'phvfsca/',fn),sep='\t',row.names=F,quote=F)
 
 avgobjerr_type = errtypedF %>% spread(model.type,err)
 fn=paste0('avg',objcost,'_surveytype_',blending,'models',gridding,'_vs_griddedobs_facet-datesite_',cost,'-rcnselect.txt')
-write.table(format(avgobjerr_type,digits=2),file.path(basepath,fn),sep='\t',row.names=F,quote=F)
+write.table(format(avgobjerr_type,digits=2),file.path(basepath,'phvfsca/',fn),sep='\t',row.names=F,quote=F)
 }
 

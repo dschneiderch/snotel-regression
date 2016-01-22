@@ -120,7 +120,7 @@ spatialblend='blend'#flag to do geostatistical blending or not (prediction stage
 output='surface'#points' #'surface' #just predict at snotel pixels #for 'points' spatialblend must also be 'blend'
 covrange='idp1'#
 fordensource='umd_forden'#'nlcd_forden'
-predictor='rcn'#'fsca'
+predictor='fsca'#'fsca'
 # scalesnotel='scale'
 # fscaMatch='wofsca'
 

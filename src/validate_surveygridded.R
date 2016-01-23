@@ -259,7 +259,12 @@ for(postscaled in c('')){
                               # metadata=surflist[[2]]
                               # surf=surfrasters[[2]]
 
-                              registerDoMC(2)
+                              if(grepl('colorado.edu',Sys.getenv("HOSTNAME"))){
+                                   registerDoMC(8)
+                              } else {
+                                   registerDoMC(3)
+                              }
+                              
                               csuswe=ldply(seq(1:length(surflist)),function(x) get_modelswe(surflist[[x]], surfrasters[[x]], gridding), .parallel=T,.inform=F)
                               csuswe$swe.obs=csuswe$swe.obs/100
 
@@ -281,7 +286,7 @@ for(postscaled in c('')){
                                         return(r)
                                         #  assign(paste(x[1],x[3],'meromysurf',sep='-'),r,envir=.GlobalEnv)
                                    })
-                                   registerDoMC(3)
+                                   
                                    urgswe=ldply(seq(1:length(surflist)),function(x) get_modelswe(surflist[[x]], surfrasters[[x]], gridding), .parallel=T,.inform=F)
                                    urgswe$swe.obs=urgswe$swe.obs/100
                               }

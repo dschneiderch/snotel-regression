@@ -166,4 +166,8 @@ if(exists('cl')) closeCluster(cl)
 #mpi.quit()
 library(pryr)
 print(mem_used())
-quit('no')
+if(grepl('colorado.edu',Sys.getenv("HOSTNAME"))){
+  quit('no')
+}
+
+

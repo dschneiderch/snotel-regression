@@ -37,7 +37,7 @@ get_modelswe=function(metadata,surf,gridding){
      ## create polygon of extent of survey area
      e <- extent(surf)
      box <- as(e, "SpatialPolygons")
-     proj4string(box)=projection(surf)
+     proj4string(box)=CRS(projection(surf))
 
      # surfpoly=rasterToPolygons(r2,dissolve=T)
      surfpoly=spTransform(box,CRS('+init=epsg:4326'))
@@ -62,7 +62,7 @@ get_modelswe=function(metadata,surf,gridding){
           layerind=which(names(snodas) %in% layername)
           snodassub=snodas[[layerind]]
           snodas.crop=crop(snodassub,extent(surfpoly)*1.2)
-          snodaspoly=spTransform(rasterToPolygons(snodas.crop),proj4string(surf))
+          snodaspoly=spTransform(rasterToPolygons(snodas.crop),CRS(proj4string(surf)))
 
           # # print(metadata[[2]])
           # png(filename=paste0('data/spatialvalidation/',metadata[[2]],'.png'))
@@ -107,7 +107,7 @@ get_modelswe=function(metadata,surf,gridding){
      if(scalesnotel=='noscale' & postscaled=='_postscaled') phvsub=phvsub*fsca_vgfcorrected
      phv.crop=crop(phvsub,extent(surfpoly)*1.2)
      if(yr>2003 & grepl('snodasgrid',gridding)) phv.crop=projectRaster(phv.crop,snodas.crop)
-     phvpoly=spTransform(rasterToPolygons(phv.crop),proj4string(surf))
+     phvpoly=spTransform(rasterToPolygons(phv.crop),CRS(proj4string(surf)))
      vm=extract(phv.crop,phvpoly)
      vo=extract(surf,phvpoly,cellnumbers=F,weights=F)
      phvswe=ldply(as.list(1:length(vm)), function(i){
@@ -125,7 +125,7 @@ get_modelswe=function(metadata,surf,gridding){
      if(scalesnotel=='noscale' & postscaled=='_postscaled') phvrcnsub=phvrcnsub*fsca_vgfcorrected
      phvrcn.crop=crop(phvrcnsub,extent(surfpoly)*1.2)
      if(yr>2003 & grepl('snodasgrid',gridding)) phvrcn.crop=projectRaster(phvrcn.crop,snodas.crop)
-     phvrcnpoly=spTransform(rasterToPolygons(phvrcn.crop),proj4string(surf))
+     phvrcnpoly=spTransform(rasterToPolygons(phvrcn.crop),CRS(proj4string(surf)))
      vm=extract(phvrcn.crop,phvrcnpoly)
      vo=extract(surf,phvrcnpoly,cellnumbers=F)
      phvrcnswe=ldply(as.list(1:length(vm)), function(i){
@@ -145,7 +145,7 @@ get_modelswe=function(metadata,surf,gridding){
           if(scalesnotel=='noscale' && postscaled=='_postscaled') phvrcnsub=phvfscasub*fsca_vgfcorrected
           phvfsca.crop=crop(phvrcnsub,extent(surfpoly)*1.2)
           if(yr>2003 && grepl('snodasgrid',gridding)) phvfsca.crop=projectRaster(phvfsca.crop,snodas.crop)
-          phvfscapoly=spTransform(rasterToPolygons(phvfsca.crop),proj4string(surf))
+          phvfscapoly=spTransform(rasterToPolygons(phvfsca.crop),CRS(proj4string(surf)))
           vm=extract(phvfsca.crop,phvfscapoly)
           vo=extract(surf,phvfscapoly,cellnumbers=F)
           phvfscaswe=ldply(as.list(1:length(vm)), function(i){
@@ -170,7 +170,7 @@ get_modelswe=function(metadata,surf,gridding){
           if(scalesnotel=='noscale' & postscaled=='_postscaled') reconsub=reconsub*fsca_vgfcorrected
           recon.crop=crop(reconsub,extent(surfpoly)*1.2)
           if(yr>2003 & grepl('snodasgrid',gridding)) recon.crop=projectRaster(recon.crop,snodas.crop)
-          reconpoly=spTransform(rasterToPolygons(recon.crop),proj4string(surf))
+          reconpoly=spTransform(rasterToPolygons(recon.crop),CRS(proj4string(surf)))
           vm=extract(recon.crop,reconpoly)
           vo=extract(surf,reconpoly,cellnumbers=F)
           reconswe=ldply(as.list(1:length(vm)), function(i){

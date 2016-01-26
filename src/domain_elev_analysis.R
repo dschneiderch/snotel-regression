@@ -17,14 +17,14 @@ colnames(demelev)=c('elev','source')
 elevdf=rbind(snotellocs.df,demelev)
 
 ggplot(elevdf)+
-     geom_freqpoly(aes(x=elev,colour=source,y=..density..),binwidth=200)+
+     geom_freqpoly(aes(x=elev,colour=source,y=..density..),binwidth=200,size=2)+
      # guides(colour=guide_legend(''))+
      labs(x='Elevation [m]')+
-     theme_bw(base_size = 18)+
+     theme_bw(base_size = 16)+
      theme(legend.title=element_blank(),
            legend.key=element_rect(colour=NA),
-           legend.key.size = unit(.1, "cm"),
+           legend.key.size = unit(.05, "npc"),
            legend.position=c(1,1),
            legend.justification=c(1,1))
 
-ggsave('graphs/elevation_distribution.png',dpi=600,width=3.3,height=2,units = 'in')
+ggsave('graphs/elevation_distribution.png',dpi=300)

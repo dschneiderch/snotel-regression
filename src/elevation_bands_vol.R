@@ -1,5 +1,5 @@
 library('ProjectTemplate')
-setwd('/Volumes/Dominik/Documents/snotel-regression_project')
+# setwd('/Volumes/Dominik/Documents/snotel-regression_project')
 load.project()
 library(doMC)
 library(scales)
@@ -294,7 +294,7 @@ mypal=c(brewer.pal(9,name='Set1'),'brown','grey35','black')
 g=ggplot(swestats_all)+
 	geom_bar(aes(x=zone,y=vol,fill=as.factor(yr)),stat='identity',position='dodge')+
 	facet_grid(basin~model,scales='free_y')+
-	scale_y_continuous(label=comma)+
+	# scale_y_continuous(label=comma)+
 	scale_fill_manual(values=mypal)+
 	theme_bw()+
 	labs(title=paste(covrange,snotelscale,sep=' - '), y=expression(SWE~Volume~group("[",km^3,"]")))
@@ -302,34 +302,62 @@ g=ggplot(swestats_all)+
 ggsave(plot=g,file=paste0('reports/',style,'/',snotelscale,'/upperCRB_huc4_elevbands_',residblending,'swetable_',dy,mnth,'-',units,'-',covrange,'-',cost,'-',fscaMatch,'.pdf'),width=17,height=6)
 
 
+
 ## plot facet 
 plot_labeller <- function(variable,value){
-  if (variable=='basin') {
-    return(basin_names[value])
-  } else if (variable=='zone') {
-    return(zone_names[value])
-  } else {
-    return(as.character(value))
-  }
+     if (variable=='basin') {
+          return(basin_names[value])
+     } else if (variable=='zone') {
+          return(zone_names[value])
+     } else {
+          return(as.character(value))
+     }
 }
 basin_names <- list(
-  'Colorado Headwaters'="Colorado\nHeadwaters",
-  'Great Divide-Upper Green'='Great Divide\nUpper Green',
-  'Gunnison'='Gunnison',
-  'Lower Green'='Lower Green',
-  'San Juan'='San Juan',
-  'Upper Colorado-Dirty Devil'='U.Colorado\nDirty Devil',
-  'Upper Colorado-Dolores'='U.Colorado\nDolores',
-  'White-Yampa'='White-Yampa'
-  )
-zone_names <- list(
-	'4000'='4000+ m' ,
-	'3500'='[3500,4000)',
-	'3000'='[3000,3500)',
-	'2500'='[2500,3000)',
-	'2000'='[2000,2500)',
-	'1000'='<2000 m'
+     'Colorado Headwaters'="Colorado\nHeadwaters",
+     'Great Divide-Upper Green'='Great Divide\nUpper Green',
+     'Gunnison'='Gunnison',
+     'Lower Green'='Lower Green',
+     'San Juan'='San Juan',
+     'Upper Colorado-Dirty Devil'='U.Colorado\nDirty Devil',
+     'Upper Colorado-Dolores'='U.Colorado\nDolores',
+     'White-Yampa'='White-Yampa'
 )
+zone_names <- list(
+     '4000'='4000+ m' ,
+     '3500'='[3500,4000)',
+     '3000'='[3000,3500)',
+     '2500'='[2500,3000)',
+     '2000'='[2000,2500)',
+     '1000'='<2000 m'
+)
+
+swestats_all=swestats_all %>%
+     mutate(volperc=vol/basinswevol)
+filter(swestats_all,yr==2011 | yr==2012) %>%
+     {
+          ggplot(.)+
+          geom_path(aes(zone,volperc,colour=model,linetype=model),size=1)+
+          scale_colour_manual(name='Model',values=c('blue','red'),drop=F,labels=c('PHV-baseline','PHV-RCN'))+
+          scale_linetype_manual(name='Model', values=c(1,2),labels=c('PHV-baseline','PHV-RCN'))+
+          labs(y='fraction of HUC4 Volume [/100]',x='Elevation [m]')+
+          facet_grid(yr~basin,labeller=plot_labeller)+
+          theme_bw(base_size=12)+
+          theme(strip.text=element_text(face='bold'),
+                panel.grid=element_blank(),
+                strip.background=element_blank(),
+                axis.line=element_line(),
+                legend.direction='vertical',
+                legend.position=c(-0.005,.89),
+                legend.justification='left',
+                legend.key.height=unit(.04,'npc'),
+                legend.key=element_rect(colour=NA),
+                legend.key.width=unit(.03,'npc'))
+          }
+ggsave(filename=paste0(graphbase,'/upperCRB_huc4_elevbands_',residblending,'_percentswevol_',dy,mnth,'-',units,'.pdf'),width=300,height=100,units='mm')
+
+
+
 
 statmin=dcast(swestats_all,zone+basin~model,value.var='vol',fun.aggregate=min)
 statmax=dcast(swestats_all,zone+basin~model,value.var='vol',fun.aggregate=max)
@@ -352,17 +380,17 @@ gg=ggplot(swestatsavg.plot)+
 	geom_bar(aes(x=as.factor(model),y=vol,fill=as.factor(model)),stat='identity',width=1,position=position_dodge(width=0))+
 	scale_fill_manual(name='Model',values=c('blue','red'),drop=F)+
 	geom_errorbar(data=swevolrange,aes(x=model,ymin=min,ymax=max),width=.45,size=0.5)+
-	coord_trans(ytrans='sqrt',limy=c(0,12))+
+	coord_trans(y='sqrt')+#,limy=c(0,12))+
 	scale_x_discrete(labels=c('PHV\nbaseline','PHV\nRCN'),expand=c(.05,0))+
 	labs(x='Model',y=expression(SWE~Volume~group("[",km^3,"]")))+
-	facet_grid(zone~basin,scales='fixed',space='free_x',labeller=plot_labeller)+
-	theme_minimal(base_size=7)+
+	facet_grid(zone~basin,scales='free_y',labeller=plot_labeller)+#plot_labeller)+
+	theme_minimal(base_size=8)+
 	theme(strip.text=element_text(face='bold'),
 		panel.grid=element_blank(),
 		strip.background=element_blank(),
 		axis.line=element_line(),
 		legend.direction='vertical',
-		legend.position=c(0,.95),
+		legend.position=c(.85,.95),
 		legend.justification='left',
 		legend.key.size=unit(.5,'lines'))
  # show(gg)
@@ -436,8 +464,6 @@ fassnachtpct=ddply(gunn,.(yr), function(dF){
 fassnachtpct
 colSums(fassnachtpct[1:3,])
 colSums(fassnachtpct[4:6,])
-
-
 
 
 # ### --- snotel elevation analysis

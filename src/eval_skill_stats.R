@@ -1,5 +1,5 @@
 library('ProjectTemplate')
-setwd('/Volumes/Dominik/Documents/snotel-regression_project')
+# setwd('/Volumes/Dominik/Documents/snotel-regression_project')
 load.project()
 library(gtable)
 library(xtable)

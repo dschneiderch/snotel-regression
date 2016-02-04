@@ -23,12 +23,12 @@ predictor='rcn' #'fsca' or 'rcn'
 
 config=''#
 basepath=paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/fullpreds/',cost,'/netcdf/',style,'/',config,'/')
-
+yr=2002
 for(yr in 2001:2012){
      phv=brick(paste0(basepath,residblend,'preds-phvrcn_',yr,'_blend-',fscaMatch,'.nc'))
      rr=crop(phv,box)
      fn=paste0('~/Downloads/phvrcn-',yr,'.nc')
-     writeRaster(rr,fn,overwrite=TRUE)
+     writeRaster(rr,fn,overwrite=TRUE,NAflag=-99,varname='swe',varunit='meters',zname='time',zunit='%Y%m%d')
      ncid=nc_open(fn,write=TRUE)
      ncatt_put(ncid,0,attname='mask_flagging',attval='values >200')
      ncatt_put(ncid,0,attname='recon.version',attval = 'v3.1')

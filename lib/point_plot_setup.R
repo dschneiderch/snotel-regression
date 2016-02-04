@@ -39,8 +39,9 @@ snotelxval=ddply(snotelxval,.(Station_ID),function(dF){
 
 stationswe=readRDS('data/station_swe_scaled.rds')
 snotelxval[snotelxval$Station_ID=='05G04S' & snotelxval$date==as.POSIXct('2001-02-05',tz='MST'),]
-str(stationswe)
-str(snotelxval)
+# str(stationswe)
+# str(snotelxval)
+### !!!! swe in the xval files is wrong by factor 10, so drop it and use the station swe from the rds file. need to fix....
 snotelxval2=merge(snotelxval[,-4],stationswe,by=c('Station_ID','date'))
 snotelxval2[snotelxval2$swe==0,'swe']=0.001
 snotelxval2[snotelxval2$snotel==0,'snotel']=0.001

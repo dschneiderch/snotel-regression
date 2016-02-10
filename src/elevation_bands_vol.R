@@ -65,7 +65,7 @@ units='metric'
 #--- Regression Analysis ---
 recon.version='v3.1'
 covrange='idp1'
-snotelscale='scale'
+scalesnotel='scale'
 product='phvrcn'
 cost='r2'
 fscaMatch='wofsca'
@@ -78,6 +78,8 @@ if(residblending=='blended'){
 }
 dateflag='B'
 config=''
+graphbase=paste0('graphs/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/',fscaMatch,'/',style,'/')
+
 
 registerDoMC(3)
 yr=2010
@@ -358,7 +360,7 @@ ggsave(filename=paste0(graphbase,'/upperCRB_huc4_elevbands_',residblending,'_per
 
 
 
-
+## huc4/elevation band swe volume bar graph ----
 statmin=dcast(swestats_all,zone+basin~model,value.var='vol',fun.aggregate=min)
 statmax=dcast(swestats_all,zone+basin~model,value.var='vol',fun.aggregate=max)
 
@@ -448,8 +450,47 @@ diff(colMeans(volsum[4:6,c('PHV','PHVRCN')]))
 diff(colMeans(volsum[7:9,c('PHV','PHVRCN')]))
 diff(colMeans(volsum[10:12,c('PHV','PHVRCN')]))
 
+## huc4/swe avg bar graph ----
+statmin=dcast(swestats_all,zone+basin~model,value.var='sweavg',fun.aggregate=min,na.rm=TRUE)
+statmax=dcast(swestats_all,zone+basin~model,value.var='sweavg',fun.aggregate=max,na.rm=TRUE)
 
-### Look at Gunnison basin in 2011 to compare to fassnacht
+swevolrange=ddply(swestats_all,.(zone,basin,model),function(x){
+     summarise(x,
+               min=min(sweavg),
+               max=max(sweavg))
+})
+swevolrange$model=ifelse(swevolrange$model=='PHV','PHV-baseline','PHV-RCN')
+swevolrange$zone=factor(swevolrange$zone,levels=rev(unique(swevolrange$zone)))
+#
+swestatsavg=dcast(swestats_all,zone+basin~model,value.var='sweavg',fun.aggregate=mean)
+swestatsavg.plot=gather(swestatsavg,model,sweavg,PHV:PHVRCN)
+swestatsavg.plot$zone=factor(swestatsavg.plot$zone,levels=rev(unique(swestatsavg.plot$zone)))
+swestatsavg.plot$model=ifelse(swestatsavg.plot$model=='PHV','PHV-baseline','PHV-RCN')
+swestatsavg.plot$sweavg=ifelse(swestatsavg.plot$sweavg==0,0.001,swestatsavg.plot$sweavg)
+
+gg=ggplot(swestatsavg.plot)+
+     geom_bar(aes(x=as.factor(model),y=sweavg,fill=as.factor(model)),stat='identity',width=1,position=position_dodge(width=0))+
+     scale_fill_manual(name='Model',values=c('blue','red'),drop=F)+
+     geom_errorbar(data=swevolrange,aes(x=model,ymin=min,ymax=max),width=.3,size=0.5)+
+     # coord_trans(y='sqrt')+#,limy=c(0,12))+
+     scale_x_discrete(labels=c('PHV\nbaseline','PHV\nRCN'),expand=c(.05,0))+
+     labs(x='Model',y="Average SWE Depth [m]")+
+     facet_grid(zone~basin,scales='free_y',labeller=plot_labeller)+#plot_labeller)+
+     theme_minimal(base_size=8)+
+     theme(strip.text=element_text(face='bold'),
+           panel.grid=element_blank(),
+           strip.background=element_blank(),
+           axis.line=element_line(),
+           legend.direction='vertical',
+           legend.position=c(.85,.95),
+           legend.justification='left',
+           legend.key.size=unit(.5,'lines'))
+# show(gg)
+ggsave(gg,file=paste0(graphbase,'/upperCRB_huc4_elevbands_',residblending,'_sweavg_',dy,mnth,'-',units,'.pdf'),width=6.6,height=6)
+
+
+
+## Look at Gunnison basin in 2011 to compare to fassnacht ----
 gunn=subset(swestats_all,basin=='Gunnison' & yr==2011)
 gunn=dcast(gunn,yr+zone~model,value.var='vol')
 colSums(gunn)
@@ -464,6 +505,8 @@ fassnachtpct=ddply(gunn,.(yr), function(dF){
 fassnachtpct
 colSums(fassnachtpct[1:3,])
 colSums(fassnachtpct[4:6,])
+
+
 
 
 # ### --- snotel elevation analysis

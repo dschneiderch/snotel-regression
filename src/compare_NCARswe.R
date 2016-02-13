@@ -9,9 +9,11 @@ library(ggplot2)
 library(doMC)
 library(ncdf4)
 library(RColorBrewer)
-
+library(broom)
+library(rasterVis)
 
 NCARv='1'
+product='phvrcn'
 recon.version='v3.1'
 covrange='idp1'
 cost='r2'
@@ -23,7 +25,15 @@ style='real-time'#nalysis'
 gridding='_modisgrid'#'_snodasgrid' or '_modisgrid'
 postscaled=''#'' or '_postscaled'
 predictor='rcn' #'fsca' or 'rcn'
+config=''
 
+rgeo=raster('data/NCAR_WRF/headwaters_grid/Geo_Info_WRF_Headwaters/hgt_m1.tif')
+
+mae=function(yhat, yobs){
+     abs(yhat-yobs)
+}
+
+## original coord info. dont use ----
 nccoordid=nc_open('data/NCAR_WRF/original_runs/geographic_data.nc')
 lat=ncvar_get(nccoordid,'XLAT')
 long=ncvar_get(nccoordid,'XLONG')
@@ -55,7 +65,7 @@ proj4string(tmppts)=p4s
 tmppts.lcc=spTransform(tmppts,p4crs)
 coords=coordinates(tmppts.lcc)
 
-## small example
+## small example ----
 tmp=data.frame(x=c(min(long),min(long),min(long)+5,max(long),max(long)),y=c(min(lat),max(lat),min(lat)+5,max(lat),min(lat)))
 extent(tmp)
 p4s='+proj=longlat +ellps=sphere +a=6370000 +b=6370000'
@@ -70,139 +80,196 @@ tmppts.lcc=spTransform(tmppts,p4crs)
 tmppoly.lcc=spTransform(tmppoly,p4crs)
 plot(tmppoly.lcc)
 plot(tmppts.lcc,add=T,col='red')
-###
 
-
-r=raster(matrix(as.numeric(lat[,,1]),byrow=T,nrow=263))
-extent(r)=c(min(long),max(long),min(lat),max(lat))
-r
-plot(r)
-
-ncswe=nc_open('data/NCAR_WRF/original_runs/SWE_daily.nc')
+## get wrf swe data ----
+ncswe=nc_open('data/NCAR_WRF/headwaters_grid/SWE_daily.nc')
 ncswe
 data_temp=ncvar_get(ncswe,'SNOW')/917#kg/m^3 #convert to meters from kg/m^2
 dt2=aperm(data_temp,c(2,1,3))
 dt2=dt2[nrow(dt2):1,,]
 rb=brick(dt2)
-extent(rb)=c(min(long),max(long),min(lat),max(lat))
-crs(rb)='+proj=lcc +lat_1=33 +lat_2=45 +lat_0=39.0000038146973 +lon_0=-107 +a=6370000 +b=6370000 +units=m +no_defs'
+extent(rb)=extent(rgeo)
+crs(rb)=crs(rgeo)
+startdate=as.Date('2000-10-01',tz='MST')
+ncdates=startdate+0:(nlayers(rb)-1)
+names(rb)=ncdates
+setZ(rb,ncdates,'time')
 
 
-#
-startdate=as.POSIXct('2000-10-01',tz='MST')
-timevec=as.numeric(strftime(seq(startdate,startdate+(3014-1)*3600*24,by=3600*24),format = '%Y%m%d'))
-
-names(rb)=timevec
-
-setZ(rb,timevec,'time')
-
-#
-fn='~/Downloads/swetest21.tif'
-writeRaster(rb,fn,overwrite=TRUE,NAflag=-99,options=c("BLOCKXSIZE=317","BLOCKYSIZE=263","compress=LZW"))
-,varname='swe',varunit='meters',zname='time',zunit='%Y%m%d')
-
-brick(fn)
-rb
-
-
-ncid=nc_open(fn,write=TRUE)
-ncatt_put(ncid,0,attname='mask_flagging',attval='values >200')
-ncatt_put(ncid,0,attname='recon.version',attval = 'v3.1')
-ncatt_put(ncid,0,attname='covrange',attval = 'idp1')
-ncatt_put(ncid,0,attname='cost',attval = 'r2')
-ncatt_put(ncid,0,attname='residblend',attval = 'none')
-ncatt_put(ncid,0,attname='scalesnotel',attval = 'scale')
-ncatt_put(ncid,0,attname='fscaMatch',attval = 'wofsca')
-ncatt_put(ncid,0,attname='dateflag',attval = 'B')
-ncatt_put(ncid,0,attname='style',attval = 'real-time')
-
-
-startdate=as.POSIXct('2000-10-01',tz='MST')
-timevec=as.numeric(strftime(seq(startdate,startdate+(3014-1)*3600*24,by=3600*24),tz='MST'))
-wantdate=as.POSIXct('2002-01-01',tz='MST')
-tind=as.numeric(wantdate-startdate)+1
-# image(data_temp[,,tind])
-datamat=as.matrix(data_temp[,,tind], by.row = F)
-datamat=aperm(datamat,c(2,1))
-datamat=datamat[nrow(datamat):1,]
-rr=raster(datamat)
-extent(rr)=c(min(long),max(long),min(lat),max(lat))
-crs(rr)='+proj=lcc +lat_1=33 +lat_2=45 +lat_0=39.0000038146973 +lon_0=-107 +a=6370000 +b=6370000 +units=m +no_defs'
-rr
-
-latdim=ncdim_def('lat',units='degrees_north',vals=unique(coordinates(rb)[,2]),longname='latitude')
-longdim=ncdim_def('long',units='degrees_east',vals=rev(unique(coordinates(rb)[,1])),longname='longitude')
-timedim=ncdim_def('time',units='%Y%m%d',vals=timevec)
-ncswevar=ncvar_def(name='swe',dim=list(longdim,latdim,timedim),chunksizes = c(317,263,1),units='meters',missval =-99,longname='snow water equivalent')
-ncprojvar=ncvar_def(name='lambert_conformal_conic',units='',dim=list(),prec='char')
-ncnew=nc_create('~/Downloads/swetest-ncdf4.nc',var=list(ncprojvar))
-ncvar_put(ncnew,ncswevar,getValues(rb))
-# ncatt_put(ncnew,'lambert_conformal_conic','grid_mapping=lambert_conformal_conic')
-ncatt_put(ncnew,varid='lambert_conformal_conic',attname='latitude_of_projection_origin',attval=39.0000038146973)
-
-
-lambert_conformal_conic#false_easting=0
-lambert_conformal_conic#false_northing=0
-lambert_conformal_conic#GeoTransform=-114.8643951416016 0.04961758682780461 0 43.73397064208984 0 -0.0368182831390729
-lambert_conformal_conic#grid_mapping_name=lambert_conformal_conic
-lambert_conformal_conic#inverse_flattening=0
-lambert_conformal_conic#latitude_of_projection_origin=39.0000038146973
-lambert_conformal_conic#longitude_of_central_meridian=-107
-lambert_conformal_conic#longitude_of_prime_meridian=0
-lambert_conformal_conic#semi_major_axis=6370000
-
-ncatt_put(ncnew,0,'proj4string','+proj=lcc +lat_1=33 +lat_2=45 +lat_0=39.0000038146973 +lon_0=-107 +a=6370000 +b=6370000 +units=m +no_defs')
-nc_close(ncnew)
-
-left=-105.75
-right=-105.25
-top=40.125
-bottom=39.875
-bb=c(left,right,top,bottom)
-box=as(extent(bb), "SpatialPolygons")
-proj4string(box)='+proj=lcc +lat_1=33 +lat_2=45 +lat_0=39.0000038146973 +lon_0=-107 +a=6370000 +b=6370000 +units=m +no_defs'
-
-nc1=nc_open('~/Downloads/swetest-ncdf4.nc',write=TRUE)
-ncatt_put(nc1,0,'spatial_ref','PROJCS["unnamed",GEOGCS["unnamed ellipse",DATUM["unknown",SPHEROID["unnamed",6370000,0]],PRIMEM["Greenwich",0],UNIT["degree",0.0174532925199433]],PROJECTION["Lambert_Conformal_Conic_2SP"],PARAMETER["standard_parallel_1",33],PARAMETER["standard_parallel_2",45],PARAMETER["latitude_of_origin",39.0000038146973],PARAMETER["central_meridian",-107],PARAMETER["false_easting",0],PARAMETER["false_northing",0],UNIT["metre",1,AUTHORITY["EPSG","9001"]]]')
-ncatt_put(nc1,0,'proj4string','+proj=lcc +lat_1=33 +lat_2=45 +lat_0=39.0000038146973 +lon_0=-107 +a=6370000 +b=6370000 +units=m +no_defs')
-ncatt_put(nc1,0,'grid_mapping','lambert_conic_conformal')
-nc_close(nc1)
-          
-
-
-brick('~/Downloads/swetest-ncdf4.nc')      
-new=nc_open('~/Downloads/swetest-ncdf4.nc')
-new
-plot(new[[tind]])
-
-for(tind in 1:dim(data_temp)[3]){
-  datamat=as.matrix(data_temp[,,tind],by.row=F)
-  datamat=aperm(datamat,c(2,1))
-  datamat=datamat[nrow(datamat):1,]
-  rr=raster(datamat)
-  ncvar_put(ncnew,ncswevar,getValues(rr),start=c(1,1,tind),count=c(263,317,1))
-
+## reproject phvrcn and write to disk ----
+yr=2001
+for(yr in 2001:2008){
+     print(yr)
+     predfile=paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/fullpreds/',cost,'/netcdf/',style,'/',config,'/',residblend,'preds-',product,'_',yr,'_blend-',fscaMatch,'.nc')
+     phvrcn=brick(predfile)
+     layernames=names(phvrcn)
+     phvrcn[phvrcn>200]=NA
+     phvrcn=aggregate(phvrcn,c(8,8),fun=mean,na.rm=TRUE)
+     names(phvrcn)=layernames
+     phvrcn=setZ(phvrcn,layernames,name = 'time')
+     phvrcn.lcc=projectRaster(phvrcn,rgeo,method='bilinear')
+     # phvrcn.lcc=brick(paste0('data/NCAR_WRF/headwaters_grid/phvrcn-',yr,'-wrfgrid.tif'))
+     names(phvrcn.lcc)=layernames
+     writeRaster(phvrcn.lcc,paste0('data/NCAR_WRF/headwaters_grid/phvrcn-',yr,'-wrfgrid.tif'),overwrite=TRUE)
+     #
 }
 
-# test=data_frame(coords,swe=datavec)
-#
-# for(postscaled in c('')){
-#      for(style in c('real-time')){
-#           for(dateflag in c('B')){
-#                for(residblend in c('')){
-#                     # scalesnotel='noscale'
-#                     for(scalesnotel in c('scale')){
-#                          # fscaMatch='wofsca'
-#                          if(scalesnotel=='scale' && postscaled=='_postscaled') next
-#
-#                          for(fscaMatch in c('wofsca')){
-#                               # if(cost=='rmse' && fscaMatch=='fsca'){
-#                               #   next#rmse/fsca and r2/fsca will have the same predictions
-#                               # }
-#
-#                               config=''#'bic-v2.5-removed_NWbdiff'
-#                               basepath=paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/fullpreds/',cost,'/netcdf/',style,'/',config,'/')
-#
-#
-#
-#                          }}}}}}
+## difference phvrcn and wrf swe as rasters and save spatial maps. calc bias too. ----
+biasdf=data_frame()
+yr=2001
+for(yr in 2001:2008){
+     predfile=paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/fullpreds/',cost,'/netcdf/',style,'/',config,'/',residblend,'preds-',product,'_',yr,'_blend-',fscaMatch,'.nc')
+     phvrcn=brick(predfile)
+     layernames=names(phvrcn)
+     phvrcn.lcc=brick(paste0('data/NCAR_WRF/headwaters_grid/phvrcn-',yr,'-wrfgrid.tif'))     
+     names(phvrcn.lcc)=layernames
+     #
+     wrfformat=strftime(as.Date(layernames,'X%Y%m%d',tz='MST'),'X%Y.%m.%d')
+     wrflayers=which(names(rb) %in% wrfformat)
+     wrfraster=rb[[wrflayers]]
+     #
+     if(nlayers(wrfraster)==nlayers(phvrcn.lcc)){
+          swediffraster=wrfraster-phvrcn.lcc
+     } else stop()
+     
+     biasdf=bind_rows(biasdf,
+          data.frame(avgdiff=cellStats(swediffraster,mean)) %>%
+               mutate(dte=rownames(.))
+     )
+     
+## plot spatial map of differences
+     # i=5
+     # for(i in 1:nlayers(swediffraster)){
+     #      zrange=seq(-.525,.525,by=0.05)#should be an even number of colors
+     #      numcols=length(zrange)+1
+     #      mypal=colorRampPalette(c('red','white','blue'))(numcols)
+     #      mypala=rev(brewer.pal(length(zrange)/2,'Blues'))
+     #      mypalb=brewer.pal(length(zrange)/2,'Reds')
+     #      # mypal=c(mypala,'grey99',mypalb)
+     #      myTheme <- BTCTheme()
+     #      myTheme$panel.background$col='grey50'
+     #      png(filename=paste0('data/NCAR_WRF/headwaters_grid/graphs/swediff_rasters/swediff_raster_',layernames[i],'.png'),res=600,height=6,width=6,units = 'in')
+     #           print(
+     #                levelplot(swediffraster[[i]],main=names(swediffraster)[i],par.settings=myTheme,col.regions=mypal, at=zrange)
+     #           )
+     #                dev.off()
+     # }
+}
+
+## plot bias for each year
+biasdf=biasdf %>%
+     mutate(dte=as.Date(strptime(dte,'X%Y.%m.%d')),
+            yr=strftime(dte,'%Y'),
+            doy=strftime(dte,'%j'),
+            dymnth=strftime(dte,'%d%b'))
+
+avgbias=biasdf %>%
+     group_by(yr) %>%
+     summarise(avg=sprintf(fmt='%.3f',mean(avgdiff))) %>%
+     mutate(y=seq(-0.05,-0.12,length.out=length(unique(.$yr))),
+            x=as.Date('2012-06-01'))
+
+ggplot(biasdf,aes(x=as.Date(paste(2012,strftime(dte,format="%m-%d"),sep='-')),y=avgdiff,colour=yr))+
+     labs(x='date',y='bias [m]')+
+     geom_point(size=2)+
+     geom_smooth(method='loess',se=FALSE)+
+     geom_text(data=avgbias,aes(x,y,label=avg,colour=yr),size=4)+
+     scale_x_date(date_breaks='month',date_labels='%d-%B')+
+     scale_colour_brewer(palette='Set1')+
+     theme_bw(base_size=14)+
+     theme(panel.background=element_rect(fill='grey20'),
+           panel.grid=element_line(colour='grey30'),
+           axis.text.x=element_text(angle=45,hjust=1))
+
+ggsave('data/NCAR_WRF/headwaters_grid/graphs/bias_wrf-phvrcn_coloryears.png',dpi=600,height=6,width=6,units='in')
+
+
+
+## combine all reprojected phvrcn in dataframe and save dates----
+# writeRaster isn't writing the layernames properly so read in original phvrcn and use those names
+phvrcndates=data_frame()
+phvrcndata=data_frame()
+for(yr in 2001:2008){
+     predfile=paste0('diagnostics/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/fullpreds/',cost,'/netcdf/',style,'/',config,'/',residblend,'preds-',product,'_',yr,'_blend-',fscaMatch,'.nc')
+     phvrcn=brick(predfile)
+     layernames=names(phvrcn)
+     phvrcn.lcc=brick(paste0('data/NCAR_WRF/headwaters_grid/phvrcn-',yr,'-wrfgrid.tif'))     
+     names(phvrcn.lcc)=layernames
+     #
+     phvrcndata=as.data.frame(phvrcn.lcc,xy=TRUE) %>%
+          tbl_df %>%
+          gather(dte,swe,-x,-y) %>%
+          mutate(dte=as.Date(dte,'X%Y%m%d',tz='MST'),
+                 model='phvrcn') %>%
+          bind_rows(phvrcndata)
+
+     phvrcndates=bind_rows(phvrcndates,data_frame(wrfformat=strftime(as.Date(layernames,'X%Y%m%d',tz='MST'),'X%Y.%m.%d')))
+}     
+
+## extract days from wrf that match phvrcn. convert to dataframe
+wrflayers=which(names(rb) %in% phvrcndates$wrfformat)
+wrfdata=as.data.frame(rb[[wrflayers]],xy=TRUE)
+wrfdata=gather(wrfdata,dte,swe,-x,-y) %>%
+     mutate(dte=as.Date(dte,'X%Y.%m.%d',tz='MST'),
+            model='wrf'
+     )
+
+## wrf elevation data
+wrfelev=as.data.frame(rgeo,xy=TRUE) 
+
+## join phvrcn, wrf and wrfelev
+alldata=bind_rows(wrfdata,phvrcndata) %>% 
+     full_join(wrfelev)
+
+## substract rasters
+
+
+## extract 01Apr from alldata for plotting. can't spread all dates (memory issues) ----
+alldata2=alldata %>%
+     mutate(dymnth=strftime(dte,'%d%b'),
+            yr=strftime(dte,'%Y')) %>%
+     filter(dymnth=='01Apr') %>%
+     spread(model,swe)
+
+## fit trend line for each year between wrf and phvrcn swe
+eqndf=alldata2 %>%
+     group_by(yr) %>%
+     do(
+          data_frame(eqn=lm_eqn(glm(data=.,wrf~phvrcn,family=gaussian(link='identity'))))
+     )
+
+## plot phvrcn vs wrf by year
+ggplot(alldata2,aes(x=phvrcn,y=wrf))+
+     geom_point()+
+     geom_abline()+
+     geom_smooth(method='lm',colour='red')+
+     geom_text(data=eqndf,aes(x=0,y=1.5,label=eqn),hjust=0,parse=TRUE,colour='red')+
+     coord_equal()+
+     facet_wrap(~yr)+
+     ggtitle('April 1')
+
+ggsave('data/NCAR_WRF/headwaters_grid/graphs/phvrcn-wrf-facetyrs-01Apr.png',dpi=600,width=12,height=8,units='in')
+
+## plot phvrcn - wrf difference by year and by elevation
+alldata2 %>%
+     mutate(swediff=wrf-phvrcn) %>%
+     {
+          ggplot(.)+
+               geom_point(aes(x=hgt_m1,y=swediff))+
+               geom_smooth(aes(x=hgt_m1,y=swediff),method='lm')+
+               facet_wrap(~yr)+
+               ggtitle('swe difference\nwrf-phvrcn\npositive difference=wrf greater')
+     }
+
+ggsave('data/NCAR_WRF/headwaters_grid/graphs/elev-phvrcn_wrf_diff-facetyrs-01Apr.png',dpi=600,width=12,height=8,units='in')
+
+## trendlines of swediff ~ elev are significantly different than 0 ----
+alldata2 %>%
+     mutate(swediff=wrf-phvrcn) %>% 
+     group_by(yr) %>%
+     do(
+          tidy(anova(lm(data=.,swediff~hgt_m1)))
+     )
+
+## 
+

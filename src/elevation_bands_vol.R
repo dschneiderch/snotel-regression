@@ -60,6 +60,8 @@ dem.m.uco=mask(dem.m,ucomask)
 huc4=readOGR('data/gis','UpperCRB')
 huc4raster=raster('data/gis/UpperCRB_rasterized.tif')
 fordenstack=stack('data/forestdensity/umd_forden.nc')
+slope.uco=raster('data/gis/gmted_uco_recongrid_aspect.tif')
+
 
 units='metric'
 #--- Regression Analysis ---
@@ -196,15 +198,26 @@ mth=strftime(dte,'%m')
 
 ##--- Get UCRB statistics based on elevation
 product='phvrcn'
-ucoelevzone_phvrcn=readRDS(paste0('reports/',style,'/',snotelscale,'/upperCRB_elevbands_',residblending,'swetable_',units,'_',dy,mnth,'-',product,'-',covrange,'-',cost,'-',fscaMatch,'.rds'))
+ucoelevzone_phvrcn=readRDS(paste0('reports/',style,'/',scalesnotel,'/upperCRB_elevbands_',residblending,'swetable_',units,'_',dy,mnth,'-',product,'-',covrange,'-',cost,'-',fscaMatch,'.rds'))
 product='phv'
-ucoelevzone_phv=readRDS(paste0('reports/',style,'/',snotelscale,'/upperCRB_elevbands_',residblending,'swetable_',units,'_',dy,mnth,'-',product,'-',covrange,'-',cost,'-',fscaMatch,'.rds'))
+ucoelevzone_phv=readRDS(paste0('reports/',style,'/',scalesnotel,'/upperCRB_elevbands_',residblending,'swetable_',units,'_',dy,mnth,'-',product,'-',covrange,'-',cost,'-',fscaMatch,'.rds'))
 ucoelevzone_phvrcn$model='PHVRCN'
 ucoelevzone_phv$model='PHV'
-ucoelevzone_all=rbind(ucoelevzone_phvrcn,ucoelevzone_phv)
+ucoelevzone_all=bind_rows(ucoelevzone_phvrcn,ucoelevzone_phv)
 
 format(ucoelevzone_all,scientific=F)
-## Average SWE calculation
+## Average SWE calculation ----
+ucoelevzone_all %>%
+     mutate(elevrange=ifelse(zone<3000,'low','high')) %>%
+     group_by(model,yr,elevrange) %>%
+     summarise(swe=mean(sweavg)) %>%
+     spread(model,swe) %>%
+     mutate(modeldiff=PHVRCN-PHV,
+            modeldiffpct=modeldiff/PHV*100) %>%
+     group_by(elevrange) %>%
+     summarise(avgdiff=mean(modeldiff),
+               avgdiffpct=mean(modeldiffpct))
+
 productavg=dcast(ucoelevzone_all,yr+zone~model,value.var='sweavg')
 yrswe=subset(productavg,yr==2011)
 #2011
@@ -242,7 +255,35 @@ ddply(yrswe,.(yr,zone),function(dF) {
 
 
 
-## Volume calculation
+## Volume calculation ----
+## yearly model differences
+ucoelevzone_all %>%
+     group_by(model,yr,zone) %>%
+     summarise(swevol=sum(vol)) %>%
+     spread(model,swevol) %>%
+     mutate(modeldiff=PHVRCN-PHV,
+            modeldiffpct=modeldiff/PHV*100) %>%
+     group_by(zone) %>%
+     summarise(sumphv=sum(PHV),
+               sumphvrcn=sum(PHVRCN) ) %>%
+     mutate(modeldiff=sumphvrcn-sumphv,
+            modeldiffpct=modeldiff/sumphv*100) %>%
+     summarise_each('mean')
+     
+     summarise(zone.phv=zone[which.max(PHV)],
+               zone.phvrcn=zone[which.max(PHVRCN)])
+     
+ucoelevzone_all %>%
+     mutate(elevrange=ifelse(zone<3000,'low','high')) %>%
+     group_by(model,yr,elevrange) %>%
+     summarise(swe=mean(vol)) %>%
+     spread(model,swe) %>%
+     mutate(modeldiff=PHVRCN-PHV,
+            modeldiffpct=modeldiff/PHV*100) %>% 
+     group_by(elevrange) %>%
+     summarise(avgdiff=mean(modeldiff),
+               avgdiffpct=mean(modeldiffpct))
+
 productvol=dcast(ucoelevzone_all,yr+zone~model,value.var='vol')
 volsum=subset(productvol,yr==2011)
 #2011
@@ -284,12 +325,12 @@ ddply(volsum,.(yr,zone),function(dF) {
 
 ## --- Get UCRB information based on huc4 subbasins and elevation
 product='phvrcn'
-swestats_phvrcn=readRDS(paste0('reports/',style,'/',snotelscale,'/upperCRB_huc4_elevbands_',residblending,'swetable_',units,'_',dy,mnth,'-',product,'-',covrange,'-',cost,'-',fscaMatch,'.rds'))
+swestats_phvrcn=readRDS(paste0('reports/',style,'/',scalesnotel,'/upperCRB_huc4_elevbands_',residblending,'swetable_',units,'_',dy,mnth,'-',product,'-',covrange,'-',cost,'-',fscaMatch,'.rds'))
 product='phv'
-swestats_phv=readRDS(paste0('reports/',style,'/',snotelscale,'/upperCRB_huc4_elevbands_',residblending,'swetable_',units,'_',dy,mnth,'-',product,'-',covrange,'-',cost,'-',fscaMatch,'.rds'))
+swestats_phv=readRDS(paste0('reports/',style,'/',scalesnotel,'/upperCRB_huc4_elevbands_',residblending,'swetable_',units,'_',dy,mnth,'-',product,'-',covrange,'-',cost,'-',fscaMatch,'.rds'))
 swestats_phvrcn$model='PHVRCN'
 swestats_phv$model='PHV'
-swestats_all=rbind(swestats_phvrcn,swestats_phv)
+swestats_all=bind_rows(swestats_phvrcn,swestats_phv)
 str(swestats_all)
 mypal=c(brewer.pal(9,name='Set1'),'brown','grey35','black')
 ## plot facet by product and basin, elevation band on x axis, all years as colors

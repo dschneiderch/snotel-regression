@@ -1,5 +1,4 @@
 library('ProjectTemplate')
-setwd('/Volumes/Dominik/Documents/snotel-regression_project')
 load.project()
 library(dplyr)
 
@@ -150,20 +149,26 @@ ggplot()+
     scale_color_manual(values=(brewer.pal(length(unique(mdlimprov$countper)),'Purples')),drop=F)+
     # scale_color_manual(values = rev(c('#b15928','#ffff99','#ff7f00','#fdbf6f','#e31a1c','#fb9a99','#6a3d9a','#cab2d6','#1f78b4','#a6cee3','#33a02c','#b2df8a','black')),drop=F)+##use this for count variable
     labs(x='Longitude', y='Latitude')+
-    # scale_x_continuous(limits=c(-112.25,-104.125))+
-    # scale_y_continuous(limits=c(33,43.75))+
-    coord_fixed(ratio=1,ylim=c(33,43.9),xlim=c(-112.35,-104.125))+
+    scale_x_continuous(expand=c(0,0))+
+    scale_y_continuous(expand=c(0,0))+
+    coord_fixed(ratio=1,ylim=c(33,43.75),xlim=c(-112.25,-104.125))+
     # expand_limits(x=c(-112.25,-104.125))+
     guides(alpha=F,
            colour=guide_legend('% of Yrs',reverse=T,override.aes=list(alpha=1,size=5)))+
-    theme_minimal()+
+    theme_bw()+
     theme(legend.key=element_rect(fill='grey40',colour='grey40'),
           legend.key.size=unit(1.5,'lines'),
           legend.background=element_rect(fill='grey40',colour='grey40'),
           legend.text=element_text(size=14,colour='grey90'),
           legend.title=element_text(size=16,colour='grey90'),
+          legend.justification=c(1,0),
+          legend.position=c(1,0),
+          axis.ticks=element_line(colour='black',size=1),
           axis.text=element_text(size=14),
           plot.title=element_text(size=18),
+          panel.grid=element_blank(),
+          panel.background=element_blank(),
+          plot.background=element_rect(colour=NA),
           axis.title=element_text(size=16))#+
       # ggtitle(paste('% of Years at each SNOTEL station where\nPHV-RCN decreases % Bias\ncompared to PHV-baseline\n',sep=''))
 

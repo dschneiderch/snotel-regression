@@ -1,25 +1,27 @@
 library('ProjectTemplate')
-setwd('~/Documents/snotel-regression_project')
+# setwd('~/Documents/snotel-regression_project')
 load.project()
+library(grid)
+library(gridExtra)
 library(gtable)
 library(xtable)
+library(dplyr)
 #plotting functions
 source('lib/skill_score_plot_functions.R')
 #get daily average snotel swe that was scaled by fsca 
 dailyavg_scaled=readRDS('data/dailyavg_snotel_scaled.rds')
 
-cost='r2'
+cost='rmse'
 fscaMatch='wofsca'
 snotelscale='scale'
-
 style='real-time'
 recon.version='v3.1'
 covrange='idp1'
 dateflag='B'
 
-for(cost in c('rmse')){
-for(snotelscale in c('scale')){
-for(fscaMatch in c('wofsca')){
+# for(cost in c('rmse')){
+# for(snotelscale in c('scale')){
+# for(fscaMatch in c('wofsca')){
 
 graphbase=paste0('graphs/rswe_',recon.version,'/covrange',covrange,'/snotel',snotelscale,'/',dateflag,'/',fscaMatch,'/',style)
 
@@ -86,10 +88,9 @@ if(cost=='rmse'){
     costlong=expression(r^2)
     diffcostlong=expression(Delta * r^2)
     # bquote(r^2)
-    
 }
 
-}}}
+# }}}
 
 ## --------------
 if(cost=='r2'){ 
@@ -113,7 +114,7 @@ summ=ddply(skill.m,.(variable,yr), function(x){
     sd=sd(Rrmse,na.rm=T),
     cv=sd/avg)
 })
-}
+
 
 head(summ)
 ddply(summ,.(variable),function(dF){
@@ -124,6 +125,7 @@ ddply(summ,.(variable),function(dF){
         max(mindoy)
         )
 })
+
 range(summ$mindoy)
 summ2=subset(summ,!grepl('full',as.character(variable)))
 mean(dcast(summ2,yr~variable,value.var='sd')$skill_phv)
@@ -137,7 +139,7 @@ str(summ)
 # write.table(x=summ,file=paste0('diagnostics/rswe_',recon.version,'/',style,'_summary_',cost,'.txt'),quote=F,row.names=F)
 
 monavg=dcast(skill.m,mnth~variable,value.var='Rrmse',fun.agg=mean,na.rm=T)
-
+}
 # stat='med'
 # dF=dcast(summ,variable~yr,value.var=stat,margins=T,fun.aggregate=mean)
 # pdf(paste0(graphbase,'/',stat,'_',costshort,'_',style,'_byyear_blended&unblended&diff.pdf'),
@@ -155,29 +157,29 @@ monavg=dcast(skill.m,mnth~variable,value.var='Rrmse',fun.agg=mean,na.rm=T)
 # dev.off()
 #  }
 
-## -- find min and max doy 
-summdoy=ddply(skill.m,.(variable,yr), function(x){
-    summarise(x,
-    min=doy[which.min(value)],
-    max=doy[which.max(value)]
-)})
-dcast(summdoy,yr~variable,value.var='min')
-dcast(summdoy,yr~variable,value.var='max')
-sd(dcast(summdoy,yr~variable,value.var='max')$skill_phvrcn)
-sd(dcast(summdoy,yr~variable,value.var='max')$skill_phv)
-
-head(summdoy)
-temp=subset(summdoy,variable=='skill_phvrcn')
-sd(temp$min)
-sd(temp$max)
-
-summdoy$model=ifelse(grepl('diff',summdoy$modeltype),'modeldiff','model')
-ddply(summdoy,.(model),function(x){
-    summarise(x,
-        minrange=range(min),
-        maxrange=range(max)
-        )
-})
+##  find min and max doy ----
+# summdoy=ddply(skill.m,.(variable,yr), function(x){
+#     summarise(x,
+#     min=doy[which.min(value)],
+#     max=doy[which.max(value)]
+# )})
+# dcast(summdoy,yr~variable,value.var='min')
+# dcast(summdoy,yr~variable,value.var='max')
+# sd(dcast(summdoy,yr~variable,value.var='max')$skill_phvrcn)
+# sd(dcast(summdoy,yr~variable,value.var='max')$skill_phv)
+# 
+# head(summdoy)
+# temp=subset(summdoy,variable=='skill_phvrcn')
+# sd(temp$min)
+# sd(temp$max)
+# 
+# summdoy$model=ifelse(grepl('diff',summdoy$modeltype),'modeldiff','model')
+# ddply(summdoy,.(model),function(x){
+#     summarise(x,
+#         minrange=range(min),
+#         maxrange=range(max)
+#         )
+# })
 # ddply(summdoy,.(modeltype),function(x){
 #     summarise(x,
 #         avgmin=mean(min),
@@ -278,7 +280,7 @@ ggmnth=monthlybarplot(monthskillplot,'value')+
         scale_y_continuous(expand=c(0,0))+
         annotate('text',label='b',x=.8,y=0.19)
 }
-ggsave(plot=ggmnth,paste0(graphbase,'/barplot_',costshort,'_',style,'_monthly_unblended.pdf'),width=6.6,height=3)
+# ggsave(plot=ggmnth,paste0(graphbase,'/barplot_',costshort,'_',style,'_monthly_unblended.pdf'),width=6.6,height=3)
   
 if(cost=='rmse'){
     costshort='RelRMSE'
@@ -294,7 +296,7 @@ ggmnth=monthlybarplot(monthskillplot,'value')+
         annotate('text',label='b',x=.8,y=1.9)+##.95*2=1.9 -- use y value from r2 plot * max of ylim to position text label.
         scale_fill_manual('Model' ,values=c('blue','red'),guide=F)
 
-ggsave(plot=ggmnth,paste0(graphbase,'/barplot_',costshort,'_',style,'_monthly_unblended.pdf'),width=6.6,height=3)
+# ggsave(plot=ggmnth,paste0(graphbase,'/barplot_',costshort,'_',style,'_monthly_unblended.pdf'),width=6.6,height=3)
 }
 
 
@@ -306,59 +308,93 @@ lp=multifacetplot(skill.m,'value',shapeguide='F')
 
 ## create 1st plot for combined figure
 skill.mplot=subset(skill.m,modeltype!='diff' & residblend=='unblended')
+yrbreak=2007
 if(cost=='rmse'){
   maxrmse=round(max(skill.mplot$value,na.rm=T),1)
-  annotedF=data.frame(yr=2001,label='b',x=60,y=0.9*maxrmse)
-  dap=dataplot(skill.mplot,'value')+
-       geom_text(data=annotedF,aes(x,y,label=label),size=4,face='bold')+
+  annotedF=data.frame(yr=2001,label='b',x=30,y=0.9*maxrmse)
+  dap1=filter(skill.mplot,yr<yrbreak) %>%
+       dataplot(.,'value')+
+       geom_text(data=annotedF,aes(x,y,label=label),size=6,fontface='bold')+
        coord_cartesian(ylim=c(0,maxrmse))
+  dap2=dplyr::filter(skill.mplot,yr>=yrbreak) %>%
+       dataplot(.,'value')
    # +   scale_y_continuous(limits=c(0,5),breaks=seq(0,5,1),labels=seq(0,5,1))
    } else if(cost=='r2'){
-  annotedF=data.frame(yr=2001,label='a',x=60,y=0.9)
-  dap=dataplot(skill.mplot,'value') +
-        geom_text(data=annotedF,aes(x,y,label=label),size=4,face='bold')+
-        coord_cartesian(ylim=c(0,1))
-    # +  scale_y_continuous(limits=c(0,1),breaks=seq(0,1,.1),labels=seq(0,1,.1))
+     annotedF=data.frame(yr=2001,label='a',x=30,y=0.9)
+     dap1=dplyr::filter(skill.mplot,yr<yrbreak) %>%
+               dataplot(.,'value')+
+               geom_text(data=annotedF,aes(x,y,label=label),size=6,fontface='bold')+
+               coord_cartesian(ylim=c(0,1))
+     dap2=dplyr::filter(skill.mplot,yr>=yrbreak) %>%
+          dataplot(.,'value')
+  # dap=dataplot(skill.mplot,'value') +
+  #       geom_text(data=annotedF,aes(x,y,label=label),size=4,fontface='bold')+
+  #       coord_cartesian(ylim=c(0,1))
+  #   # +  scale_y_continuous(limits=c(0,1),breaks=seq(0,1,.1),labels=seq(0,1,.1))
    }
 
 ## create 2nd plot for combined figure
 skill.mplot=subset(skill.m,modeltype=='diff' & residblend=='unblended')
 if(cost=='rmse'){
-dfp=diffplot(skill.mplot,'value')
+     dfp1=skill.mplot %>% 
+          filter(yr<yrbreak) %>%
+          diffplot(.,'value') 
+     dfp2=skill.mplot %>% 
+          filter(yr>=yrbreak) %>%
+          diffplot(.,'value')  
 # +    scale_y_continuous(limits=c(0,5),breaks=seq(0,5,1),labels=seq(0,5,1))
 } else if(cost=='r2'){
-dfp=diffplot(skill.mplot,'value') +  scale_y_continuous(limits=c(-.5,.5),breaks=seq(-.5,.5,.5),labels=seq(-.5,.5,.5))
+dfp1=skill.mplot %>% 
+     filter(yr<yrbreak) %>%
+     diffplot(.,'value') + 
+     scale_y_continuous(limits=c(-.5,.5),breaks=seq(-.5,.5,.5),labels=seq(-.5,.5,.5))
+dfp2=skill.mplot %>% 
+     filter(yr>=yrbreak) %>%
+     diffplot(.,'value') + 
+     scale_y_continuous(limits=c(-.5,.5),breaks=seq(-.5,.5,.5),labels=seq(-.5,.5,.5))
 }
 
 ## combine plots and save
-gA <- ggplot_gtable(ggplot_build(dap))
-    gB <- ggplot_gtable(ggplot_build(dfp))
-if(cost=='r2'){
-    maxWidth = grid::unit.pmax(gA$widths[2:3], gB$widths[2:3])
-    gA$widths[2:3] <- as.list(maxWidth)
-    gB$widths[2:3] <- as.list(maxWidth)
-    saveRDS(maxWidth,paste0(graphbase,'/scatterplot_grobwidth.rds'))
-} else if(cost=='rmse'){
-    maxWidth=readRDS(paste0(graphbase,'/scatterplot_grobwidth.rds'))
-    gA$widths[2:3] <- as.list(maxWidth)
-    gB$widths[2:3] <- as.list(maxWidth)
-}
+pdf(paste0(graphbase,'/scatterplot_',costshort,'_',style,'_byyear_unblended&diff-part1.pdf'), width=6.6, height=3, onefile = FALSE)
+arrange_2x1_shared_legend(dap1,dfp1,NULL)
+dev.off()
+pdf(paste0(graphbase,'/scatterplot_',costshort,'_',style,'_byyear_unblended&diff-part2.pdf'), width=6.6, height=3, onefile = FALSE)
+arrange_2x1_shared_legend(dap2,dfp2,lp)
+dev.off()
+    
 
-pdf(paste0(graphbase,'/scatterplot_',costshort,'_',style,'_byyear_unblended&diff.pdf'),
-    width=6.6,
-    height=3.5)
-# grid.arrange(gA,gB,heights=c(0.65,0.35))
-if(cost=='r2'){ #was trying to make r2 figure without the legend
-grid.arrange(
-        arrangeGrob(gA, gB,nrow=2,heights=c(.8,.2)),
-            glegend(lp),nrow=2,heights=c(.65,.2))
-} else if(cost=='rmse'){
-grid.arrange(
-    arrangeGrob(gA, gB,nrow=2,heights=c(.75,.25)),
-        glegend(lp), nrow=2,heights=c(.65,.2))    
-}
- dev.off()
-     
+
+# gA <- ggplot_gtable(ggplot_build(dap1))
+# gB <- ggplot_gtable(ggplot_build(dfp1))
+# if(cost=='r2'){
+#     maxWidth = grid::unit.pmax(gA$widths[2:3], gB$widths[2:3])
+#     gA$widths[2:3] <- as.list(maxWidth)
+#     gB$widths[2:3] <- as.list(maxWidth)
+#     saveRDS(maxWidth,paste0(graphbase,'/scatterplot_grobwidth.rds'))
+# } else if(cost=='rmse'){
+#     maxWidth=readRDS(paste0(graphbase,'/scatterplot_grobwidth.rds'))
+#     gA$widths[2:3] <- as.list(maxWidth)
+#     gB$widths[2:3] <- as.list(maxWidth)
+# }
+# 
+# pdf(paste0(graphbase,'/scatterplot_',costshort,'_',style,'_byyear_unblended&diff-TEST.pdf'),
+#     width=6.6,
+#     height=3.5)
+# # grid.arrange(gA,gB,heights=c(0.65,0.35))
+# if(cost=='r2'){ #was trying to make r2 figure without the legend
+# grid.arrange(gA,gB,nrow=2)
+#      gA=ggplotGrob(dap1)
+#      gB=ggplotGrob(dfp1)
+#      grid.arrange(
+#         arrangeGrob(gA, gB,nrow=2,heights=c(.8,.2)),
+#             glegend(lp),nrow=2,heights=c(.65,.2))
+# } else if(cost=='rmse'){
+# grid.arrange(
+#     arrangeGrob(gA, gB,nrow=2,heights=c(.75,.25)),
+#         glegend(lp), nrow=2,heights=c(.65,.2))    
+# }
+#  dev.off()
+#      
  
 #plot relative rmse
 if(cost=='rmse'){
@@ -367,47 +403,64 @@ if(cost=='rmse'){
     costlong='Relative RMSE'
     diffcostlong=expression(Delta * 'Rel RMSE')
 
+   #### boxplots rrmse ----
     mbp=myboxplot(skill.m,'Rrmse')+coord_cartesian(ylim=c(0,2))
-    ggsave(plot=mbp,filename=paste0(graphbase,'/boxplot_',costshort,'_',style,'_byyear_blended&unblended.pdf'),width=6.6,height=3)
+    # ggsave(plot=mbp,filename=paste0(graphbase,'/boxplot_',costshort,'_',style,'_byyear_blended&unblended.pdf'),width=6.6,height=3)
 
-###
-
-# ggplot(skill.m)+
-#      geom_freqpoly(aes(x=Rrmse,colour=variable),alpha=0.75,size=2,binwidth=0.01)+
-#      labs(x=costlong)+
-#      scale_colour_discrete(name='Model',labels=c('PHV Regression (unblended)','PHV+RCN Regression (unblended)','PHV Regression (blended)','PHV+RCN Regression (blended)'))+
-#      theme_minimal()+
-#      theme(axis.line=element_line(colour='grey10'))
-# ggsave(filename=paste0('graphs/rswe_',recon.version,'/freqpoly_',costshort,'_',style,'_blended&unblended.pdf'),width=10,height=4.5)
-
-###
-
+#### scatter plots Rrmse ----
 skill.mplot=subset(skill.m,modeltype!='diff' & residblend=='unblended')
-annotedF=data.frame(yr=2001,label='b',x=60,y=0.9*2)#0.9*2 should give the same relative height as 0.9*1 in r2 plot. 2 should match ylim max
-dap2=dataplot(skill.mplot,'Rrmse')+
-        geom_text(data=annotedF,aes(x,y,label=label),size=4,face='bold')+
-        coord_cartesian(ylim=c(0,2))
+annotedF=data.frame(yr=2001,label='b',x=30,y=0.9*2)#0.9*2 should give the same relative height as 0.9*1 in r2 plot. 2 should match ylim max
+dap1=filter(skill.mplot,yr<yrbreak) %>%
+     dataplot(.,'Rrmse')+
+          geom_text(data=annotedF,aes(x,y,label=label),size=6,fontface='bold')+
+          coord_cartesian(ylim=c(0,2))
+dap2=filter(skill.mplot,yr>=yrbreak) %>%
+          dataplot(.,'Rrmse')+
+          coord_cartesian(ylim=c(0,2))
+# +   scale_y_continuous(limits=c(0,5),breaks=seq(0,5,1),labels=seq(0,5,1))
 
+## create 2nd plot for combined figure
 skill.mplot=subset(skill.m,modeltype=='diff' & residblend=='unblended')
-#str(skill.mplot)
-range(skill.mplot$Rrmse,na.rm=T)
-dfp2=diffplot(skill.mplot,'Rrmse')#+coord_cartesian(ylim=c(-0.2,0))
+dfp1=skill.mplot %>% 
+     filter(yr<yrbreak) %>%
+     diffplot(.,'Rrmse')
+dfp2=skill.mplot %>% 
+     filter(yr>=yrbreak) %>%
+     diffplot(.,'Rrmse')  
 
-gA <- ggplot_gtable(ggplot_build(dap2))
-gB <- ggplot_gtable(ggplot_build(dfp2))
-maxWidth=readRDS(paste0(graphbase,'/scatterplot_grobwidth.rds'))
-gA$widths[2:3] <- as.list(maxWidth)
-gB$widths[2:3] <- as.list(maxWidth)
 
-pdf(paste0(graphbase,'/scatterplot_',costshort,'_',style,'_byyear_unblended&diff.pdf'),
-    # res=300,
-    width=6.6,
-    height=3)
-# grid.arrange(gA,gB,heights=c(0.65,0.35))
-grid.arrange(
-    arrangeGrob(gA, gB,nrow=2,heights=c(.75,.25)),
-        glegend(lp), nrow=2,heights=c(.65,.2))
+## combine plots and save
+pdf(paste0(graphbase,'/scatterplot_',costshort,'_',style,'_byyear_unblended&diff-part1.pdf'), width=6.6, height=3, onefile = FALSE)
+arrange_2x1_shared_legend(dap1,dfp1,NULL)
 dev.off()
+pdf(paste0(graphbase,'/scatterplot_',costshort,'_',style,'_byyear_unblended&diff-part2.pdf'), width=6.6, height=3, onefile = FALSE)
+arrange_2x1_shared_legend(dap2,dfp2,lp)
+dev.off()
+
+# dap2=dataplot(skill.mplot,'Rrmse')+
+#         geom_text(data=annotedF,aes(x,y,label=label),size=4,face='bold')+
+#         coord_cartesian(ylim=c(0,2))
+# 
+# # skill.mplot=subset(skill.m,modeltype=='diff' & residblend=='unblended')
+# #str(skill.mplot)
+# range(skill.mplot$Rrmse,na.rm=T)
+# dfp2=diffplot(skill.mplot,'Rrmse')#+coord_cartesian(ylim=c(-0.2,0))
+
+# gA <- ggplot_gtable(ggplot_build(dap2))
+# gB <- ggplot_gtable(ggplot_build(dfp2))
+# maxWidth=readRDS(paste0(graphbase,'/scatterplot_grobwidth.rds'))
+# gA$widths[2:3] <- as.list(maxWidth)
+# gB$widths[2:3] <- as.list(maxWidth)
+# 
+# pdf(paste0(graphbase,'/scatterplot_',costshort,'_',style,'_byyear_unblended&diff.pdf'),
+#     # res=300,
+#     width=6.6,
+#     height=3)
+# # grid.arrange(gA,gB,heights=c(0.65,0.35))
+# grid.arrange(
+#     arrangeGrob(gA, gB,nrow=2,heights=c(.75,.25)),
+#         glegend(lp), nrow=2,heights=c(.65,.2))
+# dev.off()
    
 
 

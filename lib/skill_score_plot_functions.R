@@ -38,7 +38,7 @@ multifacetplot=function(skill.m,yvar,shapeguide){
      facet_grid(set~yr,scale='free_y',space='free')+
      labs(y="")+
      guides(colour=guide_legend(ncol=3, byrow=F,override.aes=list(alpha=1,size=2)))+#,
-               # shape=guide_legend(override.aes=list(size=2)))+
+     # shape=guide_legend(override.aes=list(size=2)))+
      #scale_alpha_manual(name='Residual Blending',values=c(1,.5))+
      scale_shape_manual(guide=as.logical(shapeguide),name='Residual Blending',values=c(4,1))+
      scale_colour_manual(name='Model',values=c('blue','red','grey40'),labels=c('PHV-baseline','PHV-RCN','Skill Difference'))+
@@ -60,26 +60,61 @@ multifacetplot=function(skill.m,yvar,shapeguide){
 
 
 ## extract legend from plot
-glegend<-function(a.ggplot){
-  tmp <- ggplot_gtable(ggplot_build(a.ggplot))
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  legend <- tmp$grobs[[leg]]
-  return(legend)
+# glegend<-function(a.ggplot){
+#   tmp <- ggplot_gtable(ggplot_build(a.ggplot))
+#   leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+#   legend <- tmp$grobs[[leg]]
+#   return(legend)
+# }
+
+# topfig=dap1
+# bottomfig=dfp1
+# legendfig=lp
+arrange_2x1_shared_legend <- function(topfig, bottomfig, legendfig) {
+     # g1 = ggplotGrob(topfig)
+     # g2 = ggplotGrob(bottomfig)
+     # gdat= rbind(g1,g2,size='first')
+     if(!is.null(legendfig)){
+          g3 <- ggplotGrob(legendfig)
+     # g=rbind(gdat,g3,size='first')
+     # g$widths = unit.pmax(g1$widths,g2$widths)
+     id.legend <- grep("guide", g3$layout$name)
+     legend <- g3[["grobs"]][[id.legend]]
+     lwidth <- sum(legend$width)
+     
+     grid.arrange(topfig + theme(legend.position="none"), 
+                  bottomfig + theme(legend.position="none"), 
+                  legend, 
+                  layout_matrix = matrix(c(1,1,1,1,2,2,3),nrow=7),
+                  heights=unit(c(rep(1,6),.5), "cm")
+                  # widths = unit.c(unit(1, "npc") - lwidth, lwidth)
+     )
+     } else {
+          grid.arrange(topfig + theme(legend.position="none"), 
+                       bottomfig + theme(legend.position="none"), 
+                       layout_matrix = matrix(c(1,1,1,1,2,2),nrow=6),
+                       heights=unit(c(rep(1,6)), "cm")
+          )
+     }
+     
 }
+
+
 
 
 ## 
 dataplot=function(skill.mplot,yvar){
 ggplot(skill.mplot,aes_string(y=yvar))+      
       geom_point(aes(x=as.numeric(doy),colour=modeltype,shape=residblend),size=1,alpha=0.6)+
-      facet_grid(~yr,scale='free',space='free')+
+          # facet_wrap(~yr)+
+          facet_grid(~yr,scale='free',space='free')+
       labs(y=costlong,x='')+
 #      scale_alpha_manual(guide=F,name='',values=c(1,0.5))+
       scale_shape_manual(guide=F,name='',values=c(4,1))+
-      scale_colour_manual(guide=F,name='',values=c('blue','red'),labels=c('PHV','PHV+RCN'))+
+      scale_colour_manual(guide=F,name='',values=c('blue','red'),labels=c('PHV-baseline','PHV-RCN'))+
       scale_x_continuous(limits=c(1,160),labels=c(1,seq(30,180,30)),breaks=c(1,seq(30,180,30)))+
-     # coord_cartesian(ylim=c(0,0.7))+
-     #guides(colour=guide_legend(ncol=3, byrow=F,override.aes=list(alpha=1,size=2)))+
+      # coord_cartesian(ylim=c(0,0.7))+
+      # guides(colour=guide_legend(ncol=3, byrow=F,override.aes=list(alpha=1,size=2)))+
       theme_bw()+
       theme(axis.line=element_line(colour='grey10'),
            strip.background=element_rect(fill=NA,colour=NA),
@@ -87,12 +122,13 @@ ggplot(skill.mplot,aes_string(y=yvar))+
            axis.line.x=element_blank(),#element_text(size=6,angle=90,hjust=1,vjust=.5),
            axis.text.x=element_blank(),
            axis.ticks.x=element_blank(),
-           axis.text.y=element_text(size=6,angle=0),
-            axis.title=element_text(size=6),
-           legend.key=element_rect(colour='white'),
-           legend.position = c(.1,-1), 
-           legend.box = "horizontal",
-           plot.margin=unit(c(1,1,-.4,1),"cm"))
+           axis.text.y=element_text(size=7,angle=0),
+           axis.title=element_text(size=7),
+           # legend.key=element_rect(colour='white'),
+           # legend.position = c(.1,-1), 
+           # legend.box = "horizontal",
+           plot.margin=unit(c(0,0.5,-0.25,0),"cm")
+           )
 }
 
 ## 2nd plot in combined figure
@@ -108,12 +144,13 @@ ggplot(skill.mplot,aes_string(y=yvar))+
      theme(axis.line=element_line(colour='grey10'),
            strip.background=element_rect(fill=NA,colour=NA),
            strip.text=element_blank(),#element_text(face='bold',size='12'),
-            axis.title=element_text(size=6),
-           axis.text.x=element_text(size=6,angle=90,hjust=1,vjust=.5),
-           axis.text.y=element_text(size=6,angle=0),
-           legend.key=element_rect(),#element_rect(colour='white'),
-           legend.position = 'bottom', 
-           legend.box = "horizontal",
-           plot.margin=unit(c(-.4,1,-.2,1),"cm"))
+            axis.title=element_text(size=7),
+           axis.text.x=element_text(size=7,angle=90,hjust=1,vjust=.5),
+           axis.text.y=element_text(size=7,angle=0),
+           # legend.key=element_rect(),#element_rect(colour='white'),
+           # legend.position = 'bottom', 
+           # legend.box = "horizontal",
+           plot.margin=unit(c(0,0.5,0,0),"cm")
+           )
 }
 

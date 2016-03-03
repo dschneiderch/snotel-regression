@@ -220,8 +220,8 @@ brklabs[1]=paste('<= ',-outlier,sep='')
 brklabs[length(brklabs)]=paste('>= ',outlier,sep='')
 ggplot()+
   geom_histogram(data=swediffmapplot,aes(x=mdldiffpct.phv.phvrcn),breaks=brks,right=F,fill='grey80',colour='grey50')+
-  geom_linerange(data=swediffstats,aes(x=avg,ymin=0,ymax=65),show_guide=T,colour='red',size=1)+
-  geom_linerange(data=swediffstats,aes(x=med,ymin=0,ymax=65),show_guide=T,colour='blue',size=1)+
+  geom_linerange(data=swediffstats,aes(x=avg,ymin=0,ymax=65),show.legend=TRUE,colour='red',size=1)+
+  geom_linerange(data=swediffstats,aes(x=med,ymin=0,ymax=65),show.legend=TRUE,colour='blue',size=1)+
   geom_text(data=swediffstats,aes(x=-50,y=60,label=paste('avg=',round(avg,2))),colour='red',hjust=0,vjust=0)+
   geom_text(data=swediffstats,aes(x=-50,y=50,label=paste('med=',round(med,2))),colour='blue',hjust=0,vjust=.5)+
   geom_hline(yintercept=0,size=.8,color='black')+
@@ -229,7 +229,7 @@ ggplot()+
   labs(x='% Bias Difference')+
   scale_x_continuous(breaks=brks[seq(1,length(brks),2)],labels=brklabs[seq(1,length(brks),2)])+
   scale_y_continuous(expand=c(0,0),limits=c(0,90))+
-  theme_minimal()+
+  theme_minimal(base_size = 15)+
   theme(strip.text=element_blank(),#element_text(size=14,face='bold'),
         panel.grid=element_blank(),
         axis.line=element_line(size=.5))+

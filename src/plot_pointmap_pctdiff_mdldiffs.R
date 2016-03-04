@@ -141,6 +141,12 @@ mean(avgper$AveragePerformance[1:3])
 dev.new()
 ggplot(avgper)+geom_bar(aes(ElevationBand,AveragePerformance),stat='identity')
 
+sptest=mdlimprov
+coordinates(sptest)=~long+lat
+
+
+# writeOGR(sptest,dsn='/Users/dosc3612/Downloads/mdlimprov.gpkg',layer='mdlimprov',driver='GPKG')
+
 ggplot()+
     geom_raster(data=ucorelief.df,aes(x=long,y=lat,alpha=ter))+
       scale_alpha_continuous(range=c(1,0.5))+

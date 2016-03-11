@@ -45,6 +45,13 @@ snotelxval[snotelxval$Station_ID=='05G04S' & snotelxval$date==as.POSIXct('2001-0
 snotelxval2=merge(snotelxval[,-4],stationswe,by=c('Station_ID','date'))
 snotelxval2[snotelxval2$swe==0,'swe']=0.001
 snotelxval2[snotelxval2$snotel==0,'snotel']=0.001
+snotelxval2[snotelxval2$phv.pred<0,'phv.pred'] = 0.01
+snotelxval2[snotelxval2$phvrcn.pred<0,'phvrcn.pred']=0.01
+snotelxval2[snotelxval2$reconrt<0,'reconrt']=0.01
+snotelxval2[snotelxval2$phv.fullpred<0,'phv.fullpred']=0.01
+snotelxval2[snotelxval2$phvrcn.fullpred<0,'phvrcn.fullpred']=0.01
+snotelxval2[snotelxval2$reconrt.fullpred<0,'reconrt.fullpred']=0.01
+
 
 if(scalesnotel=='scale') {
 swediffmap=mutate(snotelxval2,

@@ -257,7 +257,7 @@ ddply(yrswe,.(yr,zone),function(dF) {
 
 ## Volume calculation ----
 ## yearly model differences
-ucoelevzone_all %>%
+elevband_vol=ucoelevzone_all %>%
      group_by(model,yr,zone) %>%
      summarise(swevol=sum(vol)) %>%
      spread(model,swevol) %>%
@@ -265,7 +265,14 @@ ucoelevzone_all %>%
             modeldiffpct=modeldiff/PHV*100) %>%
      group_by(zone) %>%
      summarise(sumphv=sum(PHV),
-               sumphvrcn=sum(PHVRCN) ) %>%
+               sumphvrcn=sum(PHVRCN) )
+elevband_vol
+elevband_vol %>%
+     summarise_each('sum') 
+190.4665305/564.1617
+173.215115/544.3079
+
+elevband_vol %>%
      mutate(modeldiff=sumphvrcn-sumphv,
             modeldiffpct=modeldiff/sumphv*100) %>%
      summarise_each('mean')

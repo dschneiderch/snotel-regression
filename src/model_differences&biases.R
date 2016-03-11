@@ -1,6 +1,6 @@
 library('ProjectTemplate')
 # setwd('/Volumes/Dominik/Documents/snotel-regression_project')
-load.project()
+reload.project()
 library(dplyr)
 library(tidyr)
 
@@ -14,7 +14,7 @@ dateflag='B'
 residblending='unblended'
 
 graphbase=paste0('graphs/rswe_',recon.version,'/covrange',covrange,'/snotel',scalesnotel,'/',dateflag,'/',fscaMatch,'/',style,'/')
-swediffmap=point_plot_setup(recon.version,style,cost,covrange,scalesnotel,fscaMatch,dateflag)
+swediffmap=point_plot_setup(recon.version,style,cost,covrange,scalesnotel,fscaMatch,dateflag) %>% tbl_df
 
 swediffmap2=swediffmap %>%
      select(Station_ID,date,mnth,yrdoy,phv.pred,phvrcn.pred,swediff.phv,swediff.phvrcn,fsca,yr,snotel,swe,elev) %>%     
@@ -22,7 +22,8 @@ swediffmap2=swediffmap %>%
           phv.phvrcn.diff=phv.pred-phvrcn.pred,
           phvdiff.phvrcndiff.diff=swediff.phv-swediff.phvrcn,
           doy=as.numeric(strftime(date,'%j')),
-          elevcut=cut(elev,breaks=seq(1500,3500,500),dig.lab=5))
+          mnth=factor(mnth,levels=c('Jan','Feb','Mar','Apr','May','Jun','Jul')),
+          elevcut=cut(elev,breaks=seq(1500,4000,500),dig.lab=5))
 
 indh=which(swediffmap2$phv.phvrcn.diff > 0.35)
 unique(swediffmap2$Station_ID[indh])
@@ -79,16 +80,25 @@ swediffmap2 %>%
                # ggtitle('model - snotel*fsca')
      }
 ggsave(paste0(graphbase,'elev-swediff_facetmodel_colourswe.png'),dpi=600,width=12,height=7)
-    
+   
+str(swediffmap2) 
 
-
+swediffmap2 %>% tbl_df
 
 ggplot(swediffmap2)+
      geom_bin2d(aes(x=swe,y=phv.pred,fill=..density..),binwidth=0.1)+
-     geom_abline()
-ggsave(paste0(graphbase,'phv_snotel_bin2d.png'))
+     geom_abline()+
+     facet_grid(mnth~elevcut)
+ggsave(paste0(graphbase,'phv_snotel_bin2d_facet-mnth_elevcut.png'),width=6,height=4)
 
 ggplot(swediffmap2)+
      geom_bin2d(aes(x=swe,y=phvrcn.pred,fill=..density..),binwidth=0.1)+
-     geom_abline()
-ggsave(paste0(graphbase,'phvrcn_snotel_bin2d.png'))
+     geom_abline()+
+     facet_grid(mnth~elevcut)
+ggsave(paste0(graphbase,'phvrcn_snotel_bin2d_facet-mnth_elevcut.png'),width=6,height=4)
+
+ggplot(swediffmap2)+
+     geom_bin2d(aes(x=phv.pred,y=phvrcn.pred,fill=..density..),binwidth=0.1)+
+     geom_abline()+
+     facet_grid(mnth~elevcut)
+ggsave(paste0(graphbase,'phv_phvrcn_bin2d_facet-mnth_elevcut.png'),width=6,height=4)

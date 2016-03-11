@@ -144,8 +144,7 @@ ggplot(avgper)+geom_bar(aes(ElevationBand,AveragePerformance),stat='identity')
 sptest=mdlimprov
 coordinates(sptest)=~long+lat
 
-
-# writeOGR(sptest,dsn='/Users/dosc3612/Downloads/mdlimprov.gpkg',layer='mdlimprov',driver='GPKG')
+writeOGR(sptest,dsn=paste0(graphbase,'mdlimprov.gpkg'),layer='mdlimprov',driver='GPKG',overwrite=TRUE)
 
 ggplot()+
     geom_raster(data=ucorelief.df,aes(x=long,y=lat,alpha=ter))+

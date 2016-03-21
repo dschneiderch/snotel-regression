@@ -1,8 +1,8 @@
 library('ProjectTemplate')
 # setwd('/Volumes/Dominik/Documents/snotel-regression_project')
 load.project()
-library(doMC)
-library(scales)
+# library(doMC)
+# library(scales)
 library(dplyr)
 library(tidyr)
 # library(raster) 
@@ -74,9 +74,9 @@ fscaMatch='wofsca'
 style='real-time'
 residblending='unblended'
 if(residblending=='blended'){
-	resid='full'
+     resid='full'
 } else {
-	resid=''
+     resid=''
 }
 dateflag='B'
 config=''
